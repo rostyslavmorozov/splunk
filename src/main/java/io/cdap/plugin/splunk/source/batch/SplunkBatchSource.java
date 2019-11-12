@@ -16,7 +16,6 @@
 
 package io.cdap.plugin.splunk.source.batch;
 
-import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
@@ -81,10 +80,12 @@ public class SplunkBatchSource extends BatchSource<NullWritable, Map<String, Str
 
     LineageRecorder lineageRecorder = new LineageRecorder(context, config.referenceName);
     lineageRecorder.createExternalDataset(schema);
-    lineageRecorder.recordRead("Read", "Read from Splunk",
-                               Preconditions.checkNotNull(schema.getFields()).stream()
-                                 .map(Schema.Field::getName)
-                                 .collect(Collectors.toList()));
+    if (schema.getFields() != null && !schema.getFields().isEmpty()) {
+      lineageRecorder.recordRead("Read", "Read from Splunk",
+                                 schema.getFields().stream()
+                                   .map(Schema.Field::getName)
+                                   .collect(Collectors.toList()));
+    }
 
     context.setInput(Input.of(config.referenceName, new SplunkInputFormatProvider(config)));
   }

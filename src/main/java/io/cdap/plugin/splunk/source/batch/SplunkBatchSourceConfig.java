@@ -18,6 +18,7 @@ package io.cdap.plugin.splunk.source.batch;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.splunk.HttpException;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
@@ -26,7 +27,6 @@ import io.cdap.plugin.splunk.common.AuthenticationType;
 import io.cdap.plugin.splunk.common.client.SplunkSearchClient;
 import io.cdap.plugin.splunk.common.config.BaseSplunkConfig;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -368,15 +368,40 @@ public class SplunkBatchSourceConfig extends BaseSplunkConfig {
     try {
       SplunkSearchClient client = new SplunkSearchClient(this);
       client.checkConnection();
-    } catch (IOException | RuntimeException e) {
+    } catch (HttpException e) {
+      switch (authenticationType) {
+        case BASIC:
+          collector.addFailure(
+            String.format("There was an issue communicating with Splunk API: '%s'.",
+                          e.getDetail()), null)
+            .withConfigProperty(PROPERTY_USERNAME)
+            .withConfigProperty(PROPERTY_PASSWORD);
+          break;
+        case TOKEN:
+          collector.addFailure(String.format("There was an issue communicating with Splunk API: '%s'.",
+                                             e.getDetail()), null)
+            .withStacktrace(e.getStackTrace())
+            .withConfigProperty(PROPERTY_TOKEN);
+          break;
+      }
+    } catch (RuntimeException e) {
+      /*
+       * In case wrong port specified Splunk can throw:
+       * java.lang.RuntimeException: Unrecognized SSL message, plaintext connection?
+       *
+       * In case wrong protocol specified Splunk can throw:
+       * java.lang.RuntimeException: Unexpected end of file from server
+       */
       switch (authenticationType) {
         case BASIC:
           collector.addFailure("There was an issue communicating with Splunk API.", null)
+            .withStacktrace(e.getStackTrace())
             .withConfigProperty(PROPERTY_USERNAME)
             .withConfigProperty(PROPERTY_PASSWORD);
           break;
         case TOKEN:
           collector.addFailure("There was an issue communicating with Splunk API.", null)
+            .withStacktrace(e.getStackTrace())
             .withConfigProperty(PROPERTY_TOKEN);
           break;
       }

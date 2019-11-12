@@ -46,15 +46,11 @@ public class SplunkSearchClient {
 
   /**
    * Checks connection to the service by testing API endpoint, in case
-   * of exception would be generated {@link IOException}
+   * of exception would be generated {@link RuntimeException}
    */
-  public void checkConnection() throws IOException {
-    try {
-      ServiceInfo info = splunkService.getInfo();
-      info.getVersion();
-    } catch (RuntimeException e) {
-      throw new IOException(e);
-    }
+  public void checkConnection() {
+    ServiceInfo info = splunkService.getInfo();
+    info.getVersion();
   }
 
   /**
