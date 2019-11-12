@@ -17,6 +17,7 @@
 package io.cdap.plugin.splunk.common.util;
 
 import io.cdap.plugin.splunk.source.batch.SplunkBatchSourceConfig;
+import io.cdap.plugin.splunk.source.batch.SplunkBatchSourceConfigBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -27,29 +28,10 @@ public class SearchHelperTest {
 
   @Test
   public void testDecorateSearchStringNull() {
-    SplunkBatchSourceConfig config = new SplunkBatchSourceConfig(
-      "reference",
-      "basic",
-      "apiToken",
-      "userName",
-      60000,
-      60000,
-      3,
-      60000,
-      100,
-      "invalid",
-      "password",
-      "executionMode",
-      "outputFormat",
-      null,
-      "searchId",
-      0L,
-      "earliestTime",
-      "latestTime",
-      "indexedEarliestTime",
-      "indexedLatestTime",
-      100L,
-      "schema");
+    SplunkBatchSourceConfig config =
+      new SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfigBuilder.CONFIG)
+        .setSearchString(null)
+        .build();
 
     String actual = SearchHelper.decorateSearchString(config);
 
@@ -58,29 +40,10 @@ public class SearchHelperTest {
 
   @Test
   public void testDecorateSearchStringEmpty() {
-    SplunkBatchSourceConfig config = new SplunkBatchSourceConfig(
-      "reference",
-      "basic",
-      "apiToken",
-      "userName",
-      60000,
-      60000,
-      3,
-      60000,
-      100,
-      "invalid",
-      "password",
-      "executionMode",
-      "outputFormat",
-      "",
-      "searchId",
-      0L,
-      "earliestTime",
-      "latestTime",
-      "indexedEarliestTime",
-      "indexedLatestTime",
-      100L,
-      "schema");
+    SplunkBatchSourceConfig config =
+      new SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfigBuilder.CONFIG)
+        .setSearchString("")
+        .build();
 
     String actual = SearchHelper.decorateSearchString(config);
 
@@ -92,29 +55,10 @@ public class SearchHelperTest {
   public void testDecorateSearchStringDecorate() {
     String expected = "search * | kvform";
 
-    SplunkBatchSourceConfig config = new SplunkBatchSourceConfig(
-      "reference",
-      "basic",
-      "apiToken",
-      "userName",
-      60000,
-      60000,
-      3,
-      60000,
-      100,
-      "invalid",
-      "password",
-      "executionMode",
-      "outputFormat",
-      "search *",
-      "searchId",
-      0L,
-      "earliestTime",
-      "latestTime",
-      "indexedEarliestTime",
-      "indexedLatestTime",
-      100L,
-      "schema");
+    SplunkBatchSourceConfig config =
+      new SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfigBuilder.CONFIG)
+        .setSearchString("search *")
+        .build();
 
     String actual = SearchHelper.decorateSearchString(config);
 
@@ -126,29 +70,10 @@ public class SearchHelperTest {
   public void testDecorateSearchString() {
     String expected = "search *|kvform";
 
-    SplunkBatchSourceConfig config = new SplunkBatchSourceConfig(
-      "reference",
-      "basic",
-      "apiToken",
-      "userName",
-      60000,
-      60000,
-      3,
-      60000,
-      100,
-      "invalid",
-      "password",
-      "executionMode",
-      "outputFormat",
-      expected,
-      "searchId",
-      0L,
-      "earliestTime",
-      "latestTime",
-      "indexedEarliestTime",
-      "indexedLatestTime",
-      100L,
-      "schema");
+    SplunkBatchSourceConfig config =
+      new SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfigBuilder.CONFIG)
+        .setSearchString(expected)
+        .build();
 
     String actual = SearchHelper.decorateSearchString(config);
 

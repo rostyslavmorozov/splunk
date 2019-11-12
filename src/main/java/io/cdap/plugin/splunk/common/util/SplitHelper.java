@@ -24,6 +24,9 @@ import io.cdap.plugin.splunk.source.batch.SplunkSplit;
  */
 public class SplitHelper {
 
+  private SplitHelper() {
+  }
+
   public static long getTotalResults(long totalResults, long searchResultsCount) {
     if (searchResultsCount != 0L && searchResultsCount < totalResults) {
       return searchResultsCount;

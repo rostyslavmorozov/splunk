@@ -32,6 +32,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class SearchHelper {
 
+  private SearchHelper() {
+  }
+
   public static String decorateSearchString(SplunkBatchSourceConfig config) {
     String searchString = config.getSearchString();
     if (Strings.isNullOrEmpty(searchString)) {

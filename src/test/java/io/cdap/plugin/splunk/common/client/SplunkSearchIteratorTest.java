@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.splunk.Event;
 import com.splunk.ResultsReader;
 import io.cdap.plugin.splunk.source.batch.SplunkBatchSourceConfig;
+import io.cdap.plugin.splunk.source.batch.SplunkBatchSourceConfigBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,29 +43,6 @@ import java.util.Map;
 @PowerMockIgnore({"javax.net.ssl.*"})
 public class SplunkSearchIteratorTest {
 
-  private static final SplunkBatchSourceConfig CONFIG = new SplunkBatchSourceConfig(
-    "reference",
-    "basic",
-    "apiToken",
-    "userName",
-    60000,
-    60000,
-    3,
-    60000,
-    100,
-    "invalid",
-    "password",
-    "executionMode",
-    "outputFormat",
-    "searchString",
-    "searchId",
-    0L,
-    "earliestTime",
-    "latestTime",
-    "indexedEarliestTime",
-    "indexedLatestTime",
-    100L,
-    "schema");
   private static final String SEARCH_ID = "searchId";
   private static final long OFFSET = 0L;
 
@@ -86,7 +64,8 @@ public class SplunkSearchIteratorTest {
     Mockito.when(resultsReader.iterator()).thenReturn(events.iterator());
 
     SplunkSearchIterator searchIterator = new SplunkSearchIterator(
-      null, CONFIG, SEARCH_ID, OFFSET, SplunkBatchSourceConfig.PARTITION_MAX_SIZE) {
+      null, SplunkBatchSourceConfigBuilder.CONFIG, SEARCH_ID, OFFSET,
+      SplunkBatchSourceConfig.PARTITION_MAX_SIZE) {
       @Override
       ResultsReader getResultsReader(InputStream stream, String outputFormat) {
         return resultsReader;
@@ -116,8 +95,6 @@ public class SplunkSearchIteratorTest {
 
     actual = searchIterator.hasNext();
     Assert.assertFalse(actual);
-
-    Mockito.verify(resultsReader, Mockito.times(1)).iterator();
   }
 
   private void addEvent(List events, Map<String, String> event) {

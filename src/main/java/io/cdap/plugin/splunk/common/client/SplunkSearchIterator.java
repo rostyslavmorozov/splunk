@@ -73,7 +73,7 @@ public class SplunkSearchIterator implements Iterator<Map<String, String>>, Clos
         resultsReader = getResultsReader(stream, config.getOutputFormat());
         iterator = resultsReader.iterator();
       } catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new IllegalStateException(e);
       }
     }
     return iterator.hasNext();

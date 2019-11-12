@@ -14,7 +14,7 @@ Configuration
 
 **Reference Name:** Name used to uniquely identify this source for lineage, annotating metadata, etc.
 
-**Data Source URL**: URL to point to the Splunk server. The format for URL: \<protocol>://\<host>:\<port> (ex: https://localhost:8089).
+**Data Source URL:** URL to point to the Splunk server. The format for URL: \<protocol>://\<host>:\<port> (ex: https://localhost:8089).
 
 **Authentication Type:** Authentication method to access Splunk API. Defaults to Basic Authentication.
 

@@ -21,12 +21,10 @@ import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
-import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.plugin.splunk.common.AuthenticationType;
 import io.cdap.plugin.splunk.common.client.SplunkSearchClient;
 import io.cdap.plugin.splunk.common.config.BaseSplunkConfig;
-import io.cdap.plugin.splunk.common.exception.SchemaParseException;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -257,25 +255,6 @@ public class SplunkBatchSourceConfig extends BaseSplunkConfig {
     return schema;
   }
 
-  public Schema parseSchema() {
-    try {
-      return Schema.parseJson(schema);
-    } catch (IOException | IllegalStateException e) {
-      throw new SchemaParseException(e);
-    }
-  }
-
-  public Schema parseSchema(FailureCollector collector) {
-    try {
-      return parseSchema();
-    } catch (SchemaParseException e) {
-      collector.addFailure(String.format("Unable to parse output schema: '%s'.", schema),
-                           null)
-        .withConfigProperty(PROPERTY_SCHEMA);
-      throw collector.getOrThrowException();
-    }
-  }
-
   /**
    * Returns connection properties required for Splunk client.
    *
@@ -392,12 +371,12 @@ public class SplunkBatchSourceConfig extends BaseSplunkConfig {
     } catch (IOException | RuntimeException e) {
       switch (authenticationType) {
         case BASIC:
-          collector.addFailure("There was issue communicating with Splunk API.", null)
+          collector.addFailure("There was an issue communicating with Splunk API.", null)
             .withConfigProperty(PROPERTY_USERNAME)
             .withConfigProperty(PROPERTY_PASSWORD);
           break;
         case TOKEN:
-          collector.addFailure("There was issue communicating with Splunk API.", null)
+          collector.addFailure("There was an issue communicating with Splunk API.", null)
             .withConfigProperty(PROPERTY_TOKEN);
           break;
       }

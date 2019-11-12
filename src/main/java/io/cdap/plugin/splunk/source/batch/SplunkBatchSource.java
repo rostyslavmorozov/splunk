@@ -27,9 +27,11 @@ import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.plugin.common.LineageRecorder;
+import io.cdap.plugin.splunk.common.client.SplunkSearchClient;
 import io.cdap.plugin.splunk.common.util.SchemaHelper;
 import org.apache.hadoop.io.NullWritable;
 
@@ -47,6 +49,8 @@ public class SplunkBatchSource extends BatchSource<NullWritable, Map<String, Str
   public static final String NAME = "Splunk";
 
   private final SplunkBatchSourceConfig config;
+  private Schema schema;
+  private SplunkMapToRecordTransformer transformer;
 
   public SplunkBatchSource(SplunkBatchSourceConfig config) {
     this.config = config;
@@ -56,9 +60,12 @@ public class SplunkBatchSource extends BatchSource<NullWritable, Map<String, Str
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     FailureCollector failureCollector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
     config.validate(failureCollector);
+    if (schema == null) {
+      SplunkSearchClient splunkClient = new SplunkSearchClient(config);
+      schema = SchemaHelper.getSchema(splunkClient, config.getSchema(), failureCollector);
+    }
     failureCollector.getOrThrowException();
 
-    Schema schema = SchemaHelper.getSchema(config, failureCollector);
     pipelineConfigurer.getStageConfigurer().setOutputSchema(schema);
   }
 
@@ -66,9 +73,12 @@ public class SplunkBatchSource extends BatchSource<NullWritable, Map<String, Str
   public void prepareRun(BatchSourceContext context) {
     FailureCollector failureCollector = context.getFailureCollector();
     config.validate(failureCollector);
+    if (schema == null) {
+      SplunkSearchClient splunkClient = new SplunkSearchClient(config);
+      schema = SchemaHelper.getSchema(splunkClient, config.getSchema(), failureCollector);
+    }
     failureCollector.getOrThrowException();
 
-    Schema schema = SchemaHelper.getSchema(config, failureCollector);
     LineageRecorder lineageRecorder = new LineageRecorder(context, config.referenceName);
     lineageRecorder.createExternalDataset(schema);
     lineageRecorder.recordRead("Read", "Read from Splunk",
@@ -80,15 +90,19 @@ public class SplunkBatchSource extends BatchSource<NullWritable, Map<String, Str
   }
 
   @Override
+  public void initialize(BatchRuntimeContext context) throws Exception {
+    super.initialize(context);
+    if (schema == null) {
+      SplunkSearchClient splunkClient = new SplunkSearchClient(config);
+      schema = SchemaHelper.getSchema(splunkClient, config.getSchema());
+    }
+    this.transformer = new SplunkMapToRecordTransformer(schema);
+  }
+
+  @Override
   public void transform(KeyValue<NullWritable, Map<String, String>> input,
                         Emitter<StructuredRecord> emitter) {
-    Map<String, String> entity = input.getValue();
-    Schema schema = SchemaHelper.getSchema(config, null);
-    StructuredRecord.Builder builder = StructuredRecord.builder(schema);
-    entity.entrySet().stream()
-      .filter(entry -> schema.getField(entry.getKey()) != null) // filter absent fields in the schema
-      .forEach(entry -> builder.set(entry.getKey(), entry.getValue()));
-    StructuredRecord record = builder.build();
+    StructuredRecord record = transformer.transform(input.getValue());
     emitter.emit(record);
   }
 }

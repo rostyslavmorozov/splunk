@@ -16,20 +16,14 @@
 
 package io.cdap.plugin.splunk.common.config;
 
-import io.cdap.cdap.etl.api.validation.CauseAttributes;
-import io.cdap.cdap.etl.api.validation.ValidationFailure;
-import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
-import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.List;
+import java.util.Collections;
 
 /**
  * Tests for {@link BaseSplunkConfig}
  */
-public class BaseSplunkConfigTest {
-
-  private static final String MOCK_STAGE = "mockStage";
+public class BaseSplunkConfigTest extends BaseSplunkValidationTest {
 
   @Test
   public void testValidate() {
@@ -44,9 +38,7 @@ public class BaseSplunkConfigTest {
       60000,
       100);
 
-    MockFailureCollector collector = new MockFailureCollector(MOCK_STAGE);
-    config.validate(collector);
-    Assert.assertTrue(collector.getValidationFailures().isEmpty());
+    assertValidationSucceed(config);
   }
 
   @Test
@@ -62,13 +54,6 @@ public class BaseSplunkConfigTest {
       60000,
       100);
 
-    MockFailureCollector collector = new MockFailureCollector(MOCK_STAGE);
-    config.validate(collector);
-
-    Assert.assertEquals(1, collector.getValidationFailures().size());
-    List<ValidationFailure.Cause> causeList = collector.getValidationFailures().get(0).getCauses();
-    Assert.assertEquals(1, causeList.size());
-    Assert.assertEquals(BaseSplunkConfig.PROPERTY_AUTHENTICATION_TYPE, collector.getValidationFailures().get(0)
-      .getCauses().get(0).getAttribute(CauseAttributes.STAGE_CONFIG));
+    assertValidationFailed(config, Collections.singletonList(BaseSplunkConfig.PROPERTY_AUTHENTICATION_TYPE));
   }
 }

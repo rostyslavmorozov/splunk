@@ -16,7 +16,6 @@
 
 package io.cdap.plugin.splunk.common.util;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
@@ -34,25 +33,39 @@ import java.util.stream.Collectors;
  */
 public class SchemaHelper {
 
-  public static Schema getSchema(SplunkBatchSourceConfig config, FailureCollector failureCollector) {
-    if (!Strings.isNullOrEmpty(config.getSchema())) {
-      return config.parseSchema(failureCollector);
-    }
+  private SchemaHelper() {
+  }
+
+  public static Schema getSchema(SplunkSearchClient splunkClient, String schema,
+                                 FailureCollector failureCollector) {
     try {
-      return getSchema(new SplunkSearchClient(config));
-    } catch (IOException e) {
-      throw new SchemaParseException(e);
+      return getSchema(splunkClient, schema);
+    } catch (SchemaParseException e) {
+      failureCollector.addFailure("Unable to retrieve output schema.",
+                                  null)
+        .withConfigProperty(SplunkBatchSourceConfig.PROPERTY_SCHEMA);
+      return null;
     }
   }
 
-  @VisibleForTesting
-  static Schema getSchema(SplunkSearchClient splunkClient) throws IOException {
-    List<Map<String, String>> result = splunkClient.getSample();
-    List<Schema.Field> fields = result.stream()
-      .flatMap(entity -> entity.keySet().stream())
-      .distinct()
-      .map(fieldKey -> Schema.Field.of(fieldKey, Schema.nullableOf(Schema.of(Schema.Type.STRING))))
-      .collect(Collectors.toList());
-    return Schema.recordOf("event", fields);
+  public static Schema getSchema(SplunkSearchClient splunkClient, String schema) {
+    if (!Strings.isNullOrEmpty(schema)) {
+      try {
+        return Schema.parseJson(schema);
+      } catch (IOException | IllegalStateException e) {
+        throw new SchemaParseException(e);
+      }
+    }
+    try {
+      List<Map<String, String>> result = splunkClient.getSample();
+      List<Schema.Field> fields = result.stream()
+        .flatMap(entity -> entity.keySet().stream())
+        .distinct()
+        .map(fieldKey -> Schema.Field.of(fieldKey, Schema.nullableOf(Schema.of(Schema.Type.STRING))))
+        .collect(Collectors.toList());
+      return Schema.recordOf("event", fields);
+    } catch (IOException e) {
+      throw new SchemaParseException(e);
+    }
   }
 }

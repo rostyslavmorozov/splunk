@@ -88,11 +88,11 @@ public class SplunkSearchClient {
    * @throws IOException thrown if there are any issue with the I/O operations.
    */
   public List<Map<String, String>> getSample() throws IOException {
-    long count = 100L;
+    long countOfSamples = 100L;
     SplunkBatchSourceConfig configForSchema = getConfigForSchema("Normal");
-    String searchId = getSearchId(configForSchema, count);
+    String searchId = getSearchId(configForSchema, countOfSamples);
     List<Map<String, String>> sample = new ArrayList<>();
-    try (SplunkSearchIterator iterator = buildSearchIterator(searchId, 0L, count)) {
+    try (SplunkSearchIterator iterator = buildSearchIterator(searchId, 0L, countOfSamples)) {
       iterator.forEachRemaining(sample::add);
     }
     return sample;
@@ -140,22 +140,27 @@ public class SplunkSearchClient {
                                        config.getSchema());
   }
 
-  private String getSearchId(SplunkBatchSourceConfig config, Long count) {
+  private String getSearchId(SplunkBatchSourceConfig config, Long countOfRecords) {
     Job job = getJob(config);
     while (!job.isDone()) {
       if (!job.isReady()) {
+        sleep();
         continue;
       }
-      if (count <= job.getResultCount()) {
+      if (countOfRecords <= job.getResultCount()) {
         return job.getSid();
       }
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException e) {
-        // no-op
-      }
+      sleep();
     }
     return job.getSid();
+  }
+
+  private void sleep() {
+    try {
+      Thread.sleep(500);
+    } catch (InterruptedException e) {
+      // no-op
+    }
   }
 
   private Job getJob(SplunkBatchSourceConfig config) {
