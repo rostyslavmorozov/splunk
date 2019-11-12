@@ -137,23 +137,24 @@ public class SplunkSearchClient {
   }
 
   private String getSearchId(SplunkBatchSourceConfig config, Long countOfRecords) {
+    long timeToSleepMillis = 500L;
     Job job = getJob(config);
     while (!job.isDone()) {
       if (!job.isReady()) {
-        sleep();
+        sleep(timeToSleepMillis);
         continue;
       }
       if (countOfRecords <= job.getResultCount()) {
         return job.getSid();
       }
-      sleep();
+      sleep(timeToSleepMillis);
     }
     return job.getSid();
   }
 
-  private void sleep() {
+  private void sleep(long timeToSleepMillis) {
     try {
-      Thread.sleep(500);
+      Thread.sleep(timeToSleepMillis);
     } catch (InterruptedException e) {
       // no-op
     }
