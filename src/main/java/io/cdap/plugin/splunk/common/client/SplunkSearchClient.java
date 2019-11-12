@@ -105,10 +105,10 @@ public class SplunkSearchClient {
    * @throws IOException thrown if there are any issue with the I/O operations.
    */
   public long getTotalResults() throws IOException {
-    long count = 1L;
+    long countOfRecords = 1L;
     SplunkBatchSourceConfig configForSchema = getConfigForSchema("Blocking");
-    String searchId = getSearchId(configForSchema, count);
-    try (SplunkSearchIterator iterator = buildSearchIterator(searchId, 0L, count)) {
+    String searchId = getSearchId(configForSchema, countOfRecords);
+    try (SplunkSearchIterator iterator = buildSearchIterator(searchId, 0L, countOfRecords)) {
       iterator.hasNext();
     }
     Job job = splunkService.getJob(searchId);
