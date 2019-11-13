@@ -99,6 +99,16 @@
           "widget-attributes": {
             "min": "0",
             "default": "0"
+          },
+          "plugin-function": {
+            "label": "Get Schema",
+            "widget": "outputSchema",
+            "output-property": "schema",
+            "omit-properties": [
+              {
+                "name": "schema"
+              }
+            ]
           }
         },
         {
@@ -200,7 +210,10 @@
       "name": "schema",
       "widget-type": "schema",
       "widget-attributes": {
-        "schema-default-type": "string"
+        "schema-default-type": "string",
+        "schema-types": [
+          "string"
+        ]
       }
     }
   ],
