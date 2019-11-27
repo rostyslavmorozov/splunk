@@ -16,8 +16,6 @@
 
 package io.cdap.plugin.splunk.source.batch;
 
-import io.cdap.cdap.etl.api.FailureCollector;
-
 /**
  * Helper class to simplify {@link SplunkBatchSourceConfig} class creation.
  */
@@ -69,7 +67,6 @@ public class SplunkBatchSourceConfigBuilder {
   private String indexedLatestTime;
   private Long searchResultsCount;
   private String schema;
-  private boolean mockConnection = false;
 
   public SplunkBatchSourceConfigBuilder() {
   }
@@ -209,11 +206,6 @@ public class SplunkBatchSourceConfigBuilder {
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setMockConnection(boolean mockConnection) {
-    this.mockConnection = mockConnection;
-    return this;
-  }
-
   public SplunkBatchSourceConfig build() {
     return new SplunkBatchSourceConfig(referenceName,
                                        url,
@@ -236,13 +228,6 @@ public class SplunkBatchSourceConfigBuilder {
                                        indexedEarliestTime,
                                        indexedLatestTime,
                                        searchResultsCount,
-                                       schema) {
-      @Override
-      void validateConnection(FailureCollector collector) {
-        if (!mockConnection) {
-          super.validateConnection(collector);
-        }
-      }
-    };
+                                       schema);
   }
 }

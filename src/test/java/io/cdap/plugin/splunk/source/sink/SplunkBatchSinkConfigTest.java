@@ -21,6 +21,7 @@ import io.cdap.cdap.etl.api.validation.CauseAttributes;
 import io.cdap.cdap.etl.api.validation.ValidationFailure;
 import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
 import io.cdap.plugin.splunk.common.config.BaseSplunkConfig;
+import io.cdap.plugin.splunk.common.config.BaseSplunkValidationTest;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -33,7 +34,7 @@ import java.util.stream.IntStream;
 /**
  * Tests for {@link SplunkBatchSinkConfig}
  */
-public class SplunkBatchSinkConfigTest {
+public class SplunkBatchSinkConfigTest extends BaseSplunkValidationTest {
 
   private static final String MOCK_STAGE = "mockStage";
 
@@ -56,7 +57,7 @@ public class SplunkBatchSinkConfigTest {
         .setToken("")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN));
+    assertValidationFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN), true);
   }
 
   @Test
@@ -67,7 +68,7 @@ public class SplunkBatchSinkConfigTest {
         .setToken("")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN));
+    assertValidationFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN), true);
   }
 
   @Test
@@ -77,7 +78,7 @@ public class SplunkBatchSinkConfigTest {
         .setUsername("")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_USERNAME));
+    assertValidationFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_USERNAME), true);
   }
 
   @Test
@@ -87,7 +88,7 @@ public class SplunkBatchSinkConfigTest {
         .setToken("")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN));
+    assertValidationFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN), true);
   }
 
   @Test
@@ -95,11 +96,11 @@ public class SplunkBatchSinkConfigTest {
     SplunkBatchSinkConfig config =
       new SplunkBatchSinkConfigBuilder(SplunkBatchSinkConfigBuilder.CONFIG)
         .setUrl("http://invalid.host.test.localhost:8088")
-        .setMockConnection(false)
         .build();
 
     assertValidationFailed(config, Arrays.asList(SplunkBatchSinkConfig.PROPERTY_USERNAME,
-                                                 SplunkBatchSinkConfig.PROPERTY_TOKEN));
+                                                 SplunkBatchSinkConfig.PROPERTY_TOKEN),
+                           true);
   }
 
   @Test
@@ -109,10 +110,9 @@ public class SplunkBatchSinkConfigTest {
         .setUrl("http://invalid.host.test.localhost:8088")
         .setAuthenticationType("token")
         .setUsername(null)
-        .setMockConnection(false)
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN));
+    assertValidationFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN), true);
   }
 
   @Test
@@ -123,10 +123,9 @@ public class SplunkBatchSinkConfigTest {
         .setAuthenticationType("query")
         .setToken("invalid")
         .setUsername(null)
-        .setMockConnection(false)
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN));
+    assertValidationFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN), true);
   }
 
   @Test

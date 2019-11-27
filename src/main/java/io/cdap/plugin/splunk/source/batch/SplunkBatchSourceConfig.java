@@ -16,7 +16,6 @@
 
 package io.cdap.plugin.splunk.source.batch;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.splunk.HttpException;
 import io.cdap.cdap.api.annotation.Description;
@@ -296,10 +295,6 @@ public class SplunkBatchSourceConfig extends BaseSplunkConfig {
   @Override
   public void validate(FailureCollector collector) {
     super.validate(collector);
-    boolean hasAuthErrors = checkAuthProperties(collector);
-    if (!containsMacro(PROPERTY_URL) && !hasAuthErrors) {
-      validateConnection(collector);
-    }
     if (!containsMacro(PROPERTY_SEARCH_STRING)
       && !Strings.isNullOrEmpty(searchString)) {
       String search = searchString.trim();
@@ -332,8 +327,12 @@ public class SplunkBatchSourceConfig extends BaseSplunkConfig {
     }
   }
 
-  @VisibleForTesting
-  void validateConnection(FailureCollector collector) {
+  @Override
+  public void validateConnection(FailureCollector collector) {
+    boolean hasAuthErrors = checkAuthProperties(collector);
+    if (containsMacro(PROPERTY_URL) || hasAuthErrors) {
+      return;
+    }
     AuthenticationType authenticationType = getAuthenticationType();
     try {
       SplunkSearchClient client = new SplunkSearchClient(this);

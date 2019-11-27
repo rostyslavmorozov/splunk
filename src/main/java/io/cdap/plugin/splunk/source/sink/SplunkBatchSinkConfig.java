@@ -16,7 +16,6 @@
 
 package io.cdap.plugin.splunk.source.sink;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -120,10 +119,6 @@ public class SplunkBatchSinkConfig extends BaseSplunkConfig {
 
   public void validate(FailureCollector collector, Schema schema) {
     super.validate(collector);
-    boolean hasAuthErrors = hasAuthErrors(collector);
-    if (!containsMacro(PROPERTY_URL) && !hasAuthErrors) {
-      validateConnection(collector);
-    }
     if (schema == null || schema.getFields() == null || schema.getFields().isEmpty()) {
       collector.addFailure("Sink schema must contain at least one field.", null)
         .withConfigProperty(PROPERTY_SCHEMA);
@@ -144,8 +139,13 @@ public class SplunkBatchSinkConfig extends BaseSplunkConfig {
     }
   }
 
-  @VisibleForTesting
-  void validateConnection(FailureCollector collector) {
+  @Override
+  public void validateConnection(FailureCollector collector) {
+    boolean hasAuthErrors = hasAuthErrors(collector);
+    if (containsMacro(PROPERTY_URL) || hasAuthErrors) {
+      return;
+    }
+
     AuthenticationType authenticationType = getAuthenticationType();
     try {
       Service splunkService = Service.connect(getConnectionArguments());

@@ -186,16 +186,20 @@ public class BaseSplunkConfig extends ReferencePluginConfig {
         getUrl();
       }
     } catch (IllegalArgumentException e) {
-      collector.addFailure(e.getMessage(), null)
+      collector.addFailure(String.format("Invalid 'Url' propery: %s", e.getMessage()), null)
         .withConfigProperty(PROPERTY_URL);
     }
     try {
       getAuthenticationType();
     } catch (IllegalArgumentException e) {
-      collector.addFailure(String.format("Invalid authentication type: %s.",
+      collector.addFailure(String.format("Invalid authentication type: '%s'.",
                                          authenticationType), null)
         .withConfigProperty(PROPERTY_AUTHENTICATION_TYPE);
     }
+  }
+
+  public void validateConnection(FailureCollector collector) {
+    // no-op
   }
 
   /**

@@ -57,13 +57,15 @@ public class SplunkBatchSink extends BatchSink<StructuredRecord, NullWritable, T
     FailureCollector collector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
     Schema inputSchema = pipelineConfigurer.getStageConfigurer().getInputSchema();
     config.validate(collector, inputSchema);
+    config.validateConnection(collector);
   }
 
   @Override
   public void prepareRun(BatchSinkContext context) {
-    FailureCollector failureCollector = context.getFailureCollector();
+    FailureCollector collector = context.getFailureCollector();
     Schema inputSchema = context.getInputSchema();
-    config.validate(failureCollector, inputSchema);
+    config.validate(collector, inputSchema);
+    config.validateConnection(collector);
 
     LineageRecorder lineageRecorder = new LineageRecorder(context, config.referenceName);
     if (inputSchema != null) {

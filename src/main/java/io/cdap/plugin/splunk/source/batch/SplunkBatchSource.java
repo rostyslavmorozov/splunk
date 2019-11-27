@@ -59,6 +59,7 @@ public class SplunkBatchSource extends BatchSource<NullWritable, Map<String, Str
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     FailureCollector failureCollector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
     config.validate(failureCollector);
+    config.validateConnection(failureCollector);
     if (schema == null) {
       SplunkSearchClient splunkClient = new SplunkSearchClient(config);
       schema = SchemaHelper.getSchema(splunkClient, config.getSchema(), failureCollector);
@@ -72,6 +73,7 @@ public class SplunkBatchSource extends BatchSource<NullWritable, Map<String, Str
   public void prepareRun(BatchSourceContext context) {
     FailureCollector failureCollector = context.getFailureCollector();
     config.validate(failureCollector);
+    config.validateConnection(failureCollector);
     if (schema == null) {
       SplunkSearchClient splunkClient = new SplunkSearchClient(config);
       schema = SchemaHelper.getSchema(splunkClient, config.getSchema(), failureCollector);

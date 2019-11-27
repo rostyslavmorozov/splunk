@@ -29,10 +29,7 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
 
   @Test
   public void testValidate() {
-    SplunkBatchSourceConfig config =
-      new SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfigBuilder.CONFIG)
-        .setMockConnection(true)
-        .build();
+    SplunkBatchSourceConfig config = SplunkBatchSourceConfigBuilder.CONFIG;
 
     assertValidationSucceed(config);
   }
@@ -44,7 +41,7 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
         .setUsername("")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_USERNAME));
+    assertValidationFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_USERNAME), true);
   }
 
   @Test
@@ -54,7 +51,7 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
         .setPassword("")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_PASSWORD));
+    assertValidationFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_PASSWORD), true);
   }
 
   @Test
@@ -65,7 +62,8 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
         .build();
 
     assertValidationFailed(config, Arrays.asList(SplunkBatchSourceConfig.PROPERTY_USERNAME,
-                                                 SplunkBatchSourceConfig.PROPERTY_PASSWORD));
+                                                 SplunkBatchSourceConfig.PROPERTY_PASSWORD),
+                           true);
   }
 
   @Test
@@ -76,7 +74,7 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
         .setToken("")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_TOKEN));
+    assertValidationFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_TOKEN), true);
   }
 
   @Test
@@ -87,7 +85,7 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
         .setToken("invalid")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_TOKEN));
+    assertValidationFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_TOKEN), true);
   }
 
   @Test
@@ -96,7 +94,6 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
       new SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfigBuilder.CONFIG)
         .setSearchString("")
         .setSearchId("")
-        .setMockConnection(true)
         .build();
 
     assertValidationFailed(config, Arrays.asList(SplunkBatchSourceConfig.PROPERTY_SEARCH_STRING,
@@ -109,7 +106,6 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
       new SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfigBuilder.CONFIG)
         .setSearchString("notValid")
         .setSearchId("")
-        .setMockConnection(true)
         .build();
 
     assertValidationFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_SEARCH_STRING));
@@ -121,7 +117,6 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
       new SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfigBuilder.CONFIG)
         .setExecutionMode(SplunkBatchSourceConfig.ONESHOT_JOB)
         .setSearchString("")
-        .setMockConnection(true)
         .build();
 
     assertValidationFailed(config, Arrays.asList(SplunkBatchSourceConfig.PROPERTY_EXECUTION_MODE,

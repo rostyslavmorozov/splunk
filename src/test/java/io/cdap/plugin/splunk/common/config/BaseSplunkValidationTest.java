@@ -39,8 +39,18 @@ public abstract class BaseSplunkValidationTest {
   }
 
   protected static void assertValidationFailed(BaseSplunkConfig config, List<String> paramNames) {
+    assertValidationFailed(config, paramNames, false);
+  }
+
+  protected static void assertValidationFailed(BaseSplunkConfig config,
+                                               List<String> paramNames,
+                                               boolean validateConnection) {
     MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
-    config.validate(failureCollector);
+    if (validateConnection) {
+      config.validateConnection(failureCollector);
+    } else {
+      config.validate(failureCollector);
+    }
 
     Assert.assertEquals(1, failureCollector.getValidationFailures().size());
     List<ValidationFailure.Cause> causeList = failureCollector.getValidationFailures().get(0).getCauses()

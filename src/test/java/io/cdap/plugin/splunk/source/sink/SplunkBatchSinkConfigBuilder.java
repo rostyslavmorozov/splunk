@@ -16,8 +16,6 @@
 
 package io.cdap.plugin.splunk.source.sink;
 
-import io.cdap.cdap.etl.api.FailureCollector;
-
 /**
  * Helper class to simplify {@link SplunkBatchSinkConfig} class creation.
  */
@@ -53,7 +51,6 @@ public class SplunkBatchSinkConfigBuilder {
   private Integer batchSize;
   private String eventMetadata;
   private String channelIdentifierHeader;
-  private boolean mockConnection = true;
 
   public SplunkBatchSinkConfigBuilder() {
   }
@@ -145,11 +142,6 @@ public class SplunkBatchSinkConfigBuilder {
     return this;
   }
 
-  public SplunkBatchSinkConfigBuilder setMockConnection(boolean mockConnection) {
-    this.mockConnection = mockConnection;
-    return this;
-  }
-
   public SplunkBatchSinkConfig build() {
     return new SplunkBatchSinkConfig(referenceName,
                                      url,
@@ -164,13 +156,6 @@ public class SplunkBatchSinkConfigBuilder {
                                      endpoint,
                                      batchSize,
                                      eventMetadata,
-                                     channelIdentifierHeader) {
-      @Override
-      void validateConnection(FailureCollector collector) {
-        if (!mockConnection) {
-          super.validateConnection(collector);
-        }
-      }
-    };
+                                     channelIdentifierHeader);
   }
 }
