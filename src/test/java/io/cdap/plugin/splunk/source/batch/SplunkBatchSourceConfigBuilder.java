@@ -16,6 +16,8 @@
 
 package io.cdap.plugin.splunk.source.batch;
 
+import io.cdap.cdap.etl.api.FailureCollector;
+
 /**
  * Helper class to simplify {@link SplunkBatchSourceConfig} class creation.
  */
@@ -23,6 +25,7 @@ public class SplunkBatchSourceConfigBuilder {
 
   public static final SplunkBatchSourceConfig CONFIG = new SplunkBatchSourceConfig(
     "reference",
+    "https://localhost:8089",
     "basic",
     "apiToken",
     "userName",
@@ -31,7 +34,6 @@ public class SplunkBatchSourceConfigBuilder {
     3,
     60000,
     100,
-    "invalid",
     "password",
     "executionMode",
     "outputFormat",
@@ -67,6 +69,7 @@ public class SplunkBatchSourceConfigBuilder {
   private String indexedLatestTime;
   private Long searchResultsCount;
   private String schema;
+  private boolean mockConnection = false;
 
   public SplunkBatchSourceConfigBuilder() {
   }
@@ -206,8 +209,14 @@ public class SplunkBatchSourceConfigBuilder {
     return this;
   }
 
+  public SplunkBatchSourceConfigBuilder setMockConnection(boolean mockConnection) {
+    this.mockConnection = mockConnection;
+    return this;
+  }
+
   public SplunkBatchSourceConfig build() {
     return new SplunkBatchSourceConfig(referenceName,
+                                       url,
                                        authenticationType,
                                        token,
                                        username,
@@ -216,7 +225,6 @@ public class SplunkBatchSourceConfigBuilder {
                                        numberOfRetries,
                                        maxRetryWait,
                                        maxRetryJitterWait,
-                                       url,
                                        password,
                                        executionMode,
                                        outputFormat,
@@ -228,6 +236,13 @@ public class SplunkBatchSourceConfigBuilder {
                                        indexedEarliestTime,
                                        indexedLatestTime,
                                        searchResultsCount,
-                                       schema);
+                                       schema) {
+      @Override
+      void validateConnection(FailureCollector collector) {
+        if (!mockConnection) {
+          super.validateConnection(collector);
+        }
+      }
+    };
   }
 }

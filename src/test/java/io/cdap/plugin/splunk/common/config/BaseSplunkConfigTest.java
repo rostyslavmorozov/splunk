@@ -27,32 +27,26 @@ public class BaseSplunkConfigTest extends BaseSplunkValidationTest {
 
   @Test
   public void testValidate() {
-    BaseSplunkConfig config = new BaseSplunkConfig(
-      "reference",
-      "basic",
-      "apiToken",
-      "userName",
-      60000,
-      60000,
-      3,
-      60000,
-      100);
-
+    BaseSplunkConfig config = BaseSplunkConfigBuilder.CONFIG;
     assertValidationSucceed(config);
   }
 
   @Test
+  public void testInvalidUrl() {
+    BaseSplunkConfig config =
+      new BaseSplunkConfigBuilder(BaseSplunkConfigBuilder.CONFIG)
+        .setUrl("invalid")
+        .build();
+
+    assertValidationFailed(config, Collections.singletonList(BaseSplunkConfig.PROPERTY_URL));
+  }
+
+  @Test
   public void testInvalidAuthenticationType() {
-    BaseSplunkConfig config = new BaseSplunkConfig(
-      "reference",
-      "invalid",
-      "apiToken",
-      "userName",
-      60000,
-      60000,
-      3,
-      60000,
-      100);
+    BaseSplunkConfig config =
+      new BaseSplunkConfigBuilder(BaseSplunkConfigBuilder.CONFIG)
+        .setAuthenticationType("invalid")
+        .build();
 
     assertValidationFailed(config, Collections.singletonList(BaseSplunkConfig.PROPERTY_AUTHENTICATION_TYPE));
   }

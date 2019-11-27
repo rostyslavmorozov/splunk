@@ -21,10 +21,11 @@ import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
 import com.google.common.base.Strings;
+import io.cdap.plugin.splunk.common.config.BaseSplunkConfig;
 import io.cdap.plugin.splunk.common.exception.JobResultsException;
 import io.cdap.plugin.splunk.source.batch.SplunkBatchSourceConfig;
 
-import java.io.InputStream;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -44,13 +45,21 @@ public class SearchHelper {
     return search.contains("kvform") ? search : search + " | kvform";
   }
 
-  public static Retryer<InputStream> buildRetryer(SplunkBatchSourceConfig config) {
-    return RetryerBuilder.<InputStream>newBuilder()
+  public static <T> Retryer<T> buildRetryer(BaseSplunkConfig config) {
+    return RetryerBuilder.<T>newBuilder()
       .retryIfExceptionOfType(JobResultsException.class)
       .withWaitStrategy(WaitStrategies.join(
         WaitStrategies.exponentialWait(config.getMaxRetryWait(), TimeUnit.MILLISECONDS),
         WaitStrategies.randomWait(config.getMaxRetryJitterWait(), TimeUnit.MILLISECONDS)))
       .withStopStrategy(StopStrategies.stopAfterAttempt(config.getNumberOfRetries()))
       .build();
+  }
+
+  public static <T> T wrapRetryCall(Callable<T> callable) {
+    try {
+      return callable.call();
+    } catch (Exception e) {
+      throw new JobResultsException(e);
+    }
   }
 }

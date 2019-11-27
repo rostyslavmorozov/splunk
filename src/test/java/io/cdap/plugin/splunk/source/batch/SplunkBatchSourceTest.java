@@ -19,19 +19,15 @@ package io.cdap.plugin.splunk.source.batch;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.splunk.HttpService;
 import com.splunk.RequestMessage;
 import com.splunk.ResponseMessage;
-import com.splunk.SSLSecurityProtocol;
 import com.splunk.Service;
-import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.datapipeline.DataPipelineApp;
 import io.cdap.cdap.datapipeline.SmartWorkflow;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.mock.batch.MockSink;
-import io.cdap.cdap.etl.mock.test.HydratorTestBase;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
@@ -42,21 +38,13 @@ import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
-import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.WorkflowManager;
+import io.cdap.plugin.splunk.etl.BaseSplunkTest;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.internal.AssumptionViolatedException;
-import org.junit.rules.TestName;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,68 +69,29 @@ import java.util.stream.Collectors;
  * -Dsplunk.test.url.read=
  * -Dsplunk.test.index=
  */
-public class SplunkBatchSourceTest extends HydratorTestBase {
-
-  private static final Logger LOG = LoggerFactory.getLogger(SplunkBatchSourceTest.class);
-
-  @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
-
-  private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
-  private static final String TOKEN_HEC = System.getProperty("splunk.test.token.hec");
-  private static final String TOKEN_API = System.getProperty("splunk.test.token.api");
-  private static final String URL_WRITE = System.getProperty("splunk.test.url.write");
-  private static final String URL_READ = System.getProperty("splunk.test.url.read");
-  private static final String INDEX = System.getProperty("splunk.test.index");
+public class SplunkBatchSourceTest extends BaseSplunkTest {
 
   private static final Gson GSON = new GsonBuilder().create();
   private static final Map<String, String> EXPECTED_EVENT_MAP = new HashMap<>();
   private static Service splunkClient;
 
-  @Rule
-  public TestName testName = new TestName();
-
   @BeforeClass
   public static void setupTestClass() throws Exception {
-    HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
-    try {
-      Assume.assumeNotNull(TOKEN_HEC, TOKEN_API, URL_WRITE, URL_READ, INDEX);
-    } catch (AssumptionViolatedException e) {
-      LOG.warn("ETL tests are skipped. Please find the instructions on enabling it at " +
-                 "SplunkBatchSourceTest javadoc.");
-      throw e;
-    }
-
-    URL url = new URL(URL_WRITE);
-    Map<String, Object> connectionArgs = new HashMap<>();
-    connectionArgs.put("host", url.getHost());
-    connectionArgs.put("token", "Splunk " + TOKEN_HEC);
-    connectionArgs.put("port", url.getPort());
-    connectionArgs.put("scheme", url.getProtocol());
-    splunkClient = Service.connect(connectionArgs);
-    createEvent();
+    assertProperties();
 
     ArtifactId parentArtifact = NamespaceId.DEFAULT.artifact(APP_ARTIFACT.getName(), APP_ARTIFACT.getVersion());
-
     setupBatchArtifacts(parentArtifact, DataPipelineApp.class);
-
     addPluginArtifact(NamespaceId.DEFAULT.artifact("example-plugins", "1.0.0"),
                       parentArtifact,
                       SplunkBatchSource.class);
+
+    splunkClient = buildSplunkClient(URL_WRITE, "Splunk " + TOKEN_HEC);
+    createEvent();
   }
 
   @Test
   public void testBatchSourceNormalSingleEventJson() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", "Normal")
       .put("outputFormat", "json")
       .put("searchString", String.format(
@@ -154,24 +103,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
     List<StructuredRecord> actual = getPipelineResults(
       properties, SplunkBatchSource.NAME, "SplunkBatch");
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceNormalAllEventsJson() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", "Normal")
       .put("outputFormat", "json")
       .put("searchString", String.format(
@@ -183,24 +120,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
     List<StructuredRecord> actual = getPipelineResults(
       properties, SplunkBatchSource.NAME, "SplunkBatch");
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceNormalAllIndexJson() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", "Normal")
       .put("outputFormat", "json")
       .put("searchString", String.format("search index=\"%s\" | kvform", INDEX))
@@ -214,24 +139,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
       .filter(record -> EXPECTED_EVENT_MAP.get("event").equals(record.get("event")))
       .collect(Collectors.toList());
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceNormalSingleEventXml() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", "Normal")
       .put("outputFormat", "xml")
       .put("searchString", String.format(
@@ -243,24 +156,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
     List<StructuredRecord> actual = getPipelineResults(
       properties, SplunkBatchSource.NAME, "SplunkBatch");
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceNormalAllEventsXml() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", "Normal")
       .put("outputFormat", "xml")
       .put("searchString", String.format(
@@ -272,24 +173,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
     List<StructuredRecord> actual = getPipelineResults(
       properties, SplunkBatchSource.NAME, "SplunkBatch");
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceNormalAllIndexXml() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", "Normal")
       .put("outputFormat", "xml")
       .put("searchString", String.format("search index=\"%s\" | kvform", INDEX))
@@ -303,24 +192,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
       .filter(record -> EXPECTED_EVENT_MAP.get("event").equals(record.get("event")))
       .collect(Collectors.toList());
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceNormalSingleEventCsv() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", "Normal")
       .put("outputFormat", "csv")
       .put("searchString", String.format(
@@ -332,24 +209,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
     List<StructuredRecord> actual = getPipelineResults(
       properties, SplunkBatchSource.NAME, "SplunkBatch");
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceNormalAllEventsCsv() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", "Normal")
       .put("outputFormat", "csv")
       .put("searchString", String.format(
@@ -361,24 +226,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
     List<StructuredRecord> actual = getPipelineResults(
       properties, SplunkBatchSource.NAME, "SplunkBatch");
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceNormalAllIndexCsv() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", "Normal")
       .put("outputFormat", "csv")
       .put("searchString", String.format("search index=\"%s\" | kvform", INDEX))
@@ -392,24 +245,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
       .filter(record -> EXPECTED_EVENT_MAP.get("event").equals(record.get("event")))
       .collect(Collectors.toList());
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceBlockingSingleEventJson() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", "Blocking")
       .put("outputFormat", "json")
       .put("searchString", String.format(
@@ -421,24 +262,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
     List<StructuredRecord> actual = getPipelineResults(
       properties, SplunkBatchSource.NAME, "SplunkBatch");
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceBlockingAllEventsJson() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", "Blocking")
       .put("outputFormat", "json")
       .put("searchString", String.format(
@@ -450,24 +279,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
     List<StructuredRecord> actual = getPipelineResults(
       properties, SplunkBatchSource.NAME, "SplunkBatch");
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceBlockingAllIndexJson() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", "Blocking")
       .put("outputFormat", "json")
       .put("searchString", String.format("search index=\"%s\" | kvform", INDEX))
@@ -481,24 +298,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
       .filter(record -> EXPECTED_EVENT_MAP.get("event").equals(record.get("event")))
       .collect(Collectors.toList());
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceBlockingSingleEventXml() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", "Blocking")
       .put("outputFormat", "xml")
       .put("searchString", String.format(
@@ -510,24 +315,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
     List<StructuredRecord> actual = getPipelineResults(
       properties, SplunkBatchSource.NAME, "SplunkBatch");
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceBlockingAllEventsXml() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", "Blocking")
       .put("outputFormat", "xml")
       .put("searchString", String.format(
@@ -539,24 +332,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
     List<StructuredRecord> actual = getPipelineResults(
       properties, SplunkBatchSource.NAME, "SplunkBatch");
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceBlockingAllIndexXml() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", "Blocking")
       .put("outputFormat", "xml")
       .put("searchString", String.format("search index=\"%s\" | kvform", INDEX))
@@ -570,24 +351,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
       .filter(record -> EXPECTED_EVENT_MAP.get("event").equals(record.get("event")))
       .collect(Collectors.toList());
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceBlockingSingleEventCsv() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", "Blocking")
       .put("outputFormat", "csv")
       .put("searchString", String.format(
@@ -599,24 +368,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
     List<StructuredRecord> actual = getPipelineResults(
       properties, SplunkBatchSource.NAME, "SplunkBatch");
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceBlockingAllEventsCsv() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", "Blocking")
       .put("outputFormat", "csv")
       .put("searchString", String.format(
@@ -628,24 +385,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
     List<StructuredRecord> actual = getPipelineResults(
       properties, SplunkBatchSource.NAME, "SplunkBatch");
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceBlockingAllIndexCsv() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", "Blocking")
       .put("outputFormat", "csv")
       .put("searchString", String.format("search index=\"%s\" | kvform", INDEX))
@@ -659,24 +404,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
       .filter(record -> EXPECTED_EVENT_MAP.get("event").equals(record.get("event")))
       .collect(Collectors.toList());
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceOneshotSingleEventJson() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", SplunkBatchSourceConfig.ONESHOT_JOB)
       .put("outputFormat", "json")
       .put("searchString", String.format(
@@ -688,24 +421,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
     List<StructuredRecord> actual = getPipelineResults(
       properties, SplunkBatchSource.NAME, "SplunkBatch");
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceOneshotAllEventsJson() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", SplunkBatchSourceConfig.ONESHOT_JOB)
       .put("outputFormat", "json")
       .put("searchString", String.format(
@@ -717,24 +438,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
     List<StructuredRecord> actual = getPipelineResults(
       properties, SplunkBatchSource.NAME, "SplunkBatch");
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceOneshotAllIndexJson() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", SplunkBatchSourceConfig.ONESHOT_JOB)
       .put("outputFormat", "json")
       .put("searchString", String.format("search index=\"%s\" | kvform", INDEX))
@@ -748,24 +457,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
       .filter(record -> EXPECTED_EVENT_MAP.get("event").equals(record.get("event")))
       .collect(Collectors.toList());
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceOneshotSingleEventXml() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", SplunkBatchSourceConfig.ONESHOT_JOB)
       .put("outputFormat", "xml")
       .put("searchString", String.format(
@@ -777,24 +474,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
     List<StructuredRecord> actual = getPipelineResults(
       properties, SplunkBatchSource.NAME, "SplunkBatch");
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceOneshotAllEventsXml() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", SplunkBatchSourceConfig.ONESHOT_JOB)
       .put("outputFormat", "xml")
       .put("searchString", String.format(
@@ -806,24 +491,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
     List<StructuredRecord> actual = getPipelineResults(
       properties, SplunkBatchSource.NAME, "SplunkBatch");
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceOneshotAllIndexXml() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", SplunkBatchSourceConfig.ONESHOT_JOB)
       .put("outputFormat", "xml")
       .put("searchString", String.format("search index=\"%s\" | kvform", INDEX))
@@ -837,24 +510,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
       .filter(record -> EXPECTED_EVENT_MAP.get("event").equals(record.get("event")))
       .collect(Collectors.toList());
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceOneshotSingleEventCsv() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", SplunkBatchSourceConfig.ONESHOT_JOB)
       .put("outputFormat", "csv")
       .put("searchString", String.format(
@@ -866,24 +527,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
     List<StructuredRecord> actual = getPipelineResults(
       properties, SplunkBatchSource.NAME, "SplunkBatch");
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceOneshotAllEventsCsv() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", SplunkBatchSourceConfig.ONESHOT_JOB)
       .put("outputFormat", "csv")
       .put("searchString", String.format(
@@ -895,24 +544,12 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
     List<StructuredRecord> actual = getPipelineResults(
       properties, SplunkBatchSource.NAME, "SplunkBatch");
 
-    Assert.assertEquals(1, actual.size());
-
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+    assertEventResult(actual);
   }
 
   @Test
   public void testBatchSourceOneshotAllIndexCsv() throws Exception {
-    ImmutableMap<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("referenceName", "ref")
-      .put("authenticationType", "token")
-      .put("token", TOKEN_API)
-      .put("connectTimeout", "60000")
-      .put("readTimeout", "60000")
-      .put("numberOfRetries", "3")
-      .put("maxRetryWait", "60000")
-      .put("maxRetryJitterWait", "100")
-      .put("url", URL_READ)
+    ImmutableMap<String, String> properties = getBasicConfig()
       .put("executionMode", SplunkBatchSourceConfig.ONESHOT_JOB)
       .put("outputFormat", "csv")
       .put("searchString", String.format("search index=\"%s\" | kvform", INDEX))
@@ -926,10 +563,20 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
       .filter(record -> EXPECTED_EVENT_MAP.get("event").equals(record.get("event")))
       .collect(Collectors.toList());
 
-    Assert.assertEquals(1, actual.size());
+    assertEventResult(actual);
+  }
 
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
-    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
+  private ImmutableMap.Builder<String, String> getBasicConfig() {
+    return ImmutableMap.<String, String>builder()
+      .put("referenceName", "ref")
+      .put("authenticationType", "token")
+      .put("token", TOKEN_API)
+      .put("connectTimeout", "60000")
+      .put("readTimeout", "60000")
+      .put("numberOfRetries", "3")
+      .put("maxRetryWait", "60000")
+      .put("maxRetryJitterWait", "100")
+      .put("url", URL_READ);
   }
 
   private List<StructuredRecord> getPipelineResults(Map<String, String> sourceProperties,
@@ -955,6 +602,13 @@ public class SplunkBatchSourceTest extends HydratorTestBase {
 
     DataSetManager<Table> outputManager = getDataset(outputDatasetName);
     return MockSink.readOutput(outputManager);
+  }
+
+  private void assertEventResult(List<StructuredRecord> actual) {
+    Assert.assertEquals(1, actual.size());
+
+    Assert.assertEquals(EXPECTED_EVENT_MAP.get("event"), actual.get(0).get("event"));
+    Assert.assertEquals(EXPECTED_EVENT_MAP.get("testField"), actual.get(0).get("testField"));
   }
 
   private static void createEvent() throws IOException {

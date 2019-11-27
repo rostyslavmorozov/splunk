@@ -28,7 +28,7 @@ import java.util.stream.IntStream;
 /**
  * Helper class to simplify config validation.
  */
-public class BaseSplunkValidationTest {
+public abstract class BaseSplunkValidationTest {
 
   private static final String MOCK_STAGE = "mockStage";
 

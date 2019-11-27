@@ -28,5 +28,10 @@ public enum AuthenticationType {
   /**
    * API Token
    */
-  TOKEN
+  TOKEN,
+
+  /**
+   * Query String
+   */
+  QUERY_STRING
 }

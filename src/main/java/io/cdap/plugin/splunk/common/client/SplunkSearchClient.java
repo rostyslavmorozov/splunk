@@ -16,12 +16,13 @@
 
 package io.cdap.plugin.splunk.common.client;
 
+import com.github.rholder.retry.RetryException;
+import com.github.rholder.retry.Retryer;
 import com.google.common.base.Strings;
-import com.splunk.HttpService;
 import com.splunk.Job;
-import com.splunk.SSLSecurityProtocol;
 import com.splunk.Service;
 import com.splunk.ServiceInfo;
+import io.cdap.plugin.splunk.common.exception.ConnectionTimeoutException;
 import io.cdap.plugin.splunk.common.util.SearchHelper;
 import io.cdap.plugin.splunk.source.batch.SplunkBatchSourceConfig;
 
@@ -29,6 +30,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Splunk Client Wrapper.
@@ -39,9 +41,8 @@ public class SplunkSearchClient {
   private final Service splunkService;
 
   public SplunkSearchClient(SplunkBatchSourceConfig config) {
-    HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
     this.config = config;
-    this.splunkService = Service.connect(config.getConnectionArguments());
+    this.splunkService = buildSplunkService(config);
   }
 
   /**
@@ -111,8 +112,23 @@ public class SplunkSearchClient {
     return job.getResultCount();
   }
 
+  private Service buildSplunkService(SplunkBatchSourceConfig config) {
+    Retryer<Service> retryer = SearchHelper.buildRetryer(config);
+    try {
+      return retryer.call(() -> getService(config));
+    } catch (ExecutionException | RetryException e) {
+      throw new ConnectionTimeoutException(
+        String.format("Cannot create Splunk connection to: '%s'", config.getUrlString()), e);
+    }
+  }
+
+  private Service getService(SplunkBatchSourceConfig config) {
+    return SearchHelper.wrapRetryCall(() -> Service.connect(config.getConnectionArguments()));
+  }
+
   private SplunkBatchSourceConfig getConfigForSchema(String executionMode) {
     return new SplunkBatchSourceConfig(config.referenceName,
+                                       config.getUrlString(),
                                        config.getAuthenticationTypeString(),
                                        config.getToken(),
                                        config.getUsername(),
@@ -121,7 +137,6 @@ public class SplunkSearchClient {
                                        config.getNumberOfRetries(),
                                        config.getMaxRetryWait(),
                                        config.getMaxRetryJitterWait(),
-                                       config.getUrlString(),
                                        config.getPassword(),
                                        executionMode,
                                        config.getOutputFormat(),

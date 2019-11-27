@@ -14,38 +14,38 @@
  * the License.
  */
 
-package io.cdap.plugin.splunk.source.batch;
+package io.cdap.plugin.splunk.source.sink;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.cdap.cdap.api.data.batch.InputFormatProvider;
+import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 
 import java.util.Map;
 
 /**
- * InputFormatProvider used by cdap to provide configurations to mapreduce job.
+ * OutputFormatProvider used by cdap to provide configurations to mapreduce job.
  */
-public class SplunkInputFormatProvider implements InputFormatProvider {
+public class SplunkOutputFormatProvider implements OutputFormatProvider {
 
-  public static final String PROPERTY_CONFIG_JSON = "cdap.splunk.source.config";
+  public static final String PROPERTY_CONFIG_JSON = "cdap.splunk.sink.config";
 
   private static final Gson GSON = new GsonBuilder().create();
   private final Map<String, String> conf;
 
-  public SplunkInputFormatProvider(SplunkBatchSourceConfig config) {
+  public SplunkOutputFormatProvider(SplunkBatchSinkConfig config) {
     this.conf = new ImmutableMap.Builder<String, String>()
       .put(PROPERTY_CONFIG_JSON, GSON.toJson(config))
       .build();
   }
 
   @Override
-  public String getInputFormatClassName() {
-    return SplunkInputFormat.class.getName();
+  public String getOutputFormatClassName() {
+    return SplunkOutputFormat.class.getName();
   }
 
   @Override
-  public Map<String, String> getInputFormatConfiguration() {
+  public Map<String, String> getOutputFormatConfiguration() {
     return conf;
   }
 }
