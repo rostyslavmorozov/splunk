@@ -57,7 +57,7 @@ public class SplunkBatchSinkConfigTest extends BaseSplunkValidationTest {
         .setToken("")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN), true);
+    assertValidationConnectionFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN));
   }
 
   @Test
@@ -68,7 +68,7 @@ public class SplunkBatchSinkConfigTest extends BaseSplunkValidationTest {
         .setToken("")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN), true);
+    assertValidationConnectionFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN));
   }
 
   @Test
@@ -78,7 +78,7 @@ public class SplunkBatchSinkConfigTest extends BaseSplunkValidationTest {
         .setUsername("")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_USERNAME), true);
+    assertValidationConnectionFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_USERNAME));
   }
 
   @Test
@@ -88,7 +88,7 @@ public class SplunkBatchSinkConfigTest extends BaseSplunkValidationTest {
         .setToken("")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN), true);
+    assertValidationConnectionFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN));
   }
 
   @Test
@@ -98,9 +98,9 @@ public class SplunkBatchSinkConfigTest extends BaseSplunkValidationTest {
         .setUrl("http://invalid.host.test.localhost:8088")
         .build();
 
-    assertValidationFailed(config, Arrays.asList(SplunkBatchSinkConfig.PROPERTY_USERNAME,
-                                                 SplunkBatchSinkConfig.PROPERTY_TOKEN),
-                           true);
+    assertValidationConnectionFailed(config, Arrays.asList(SplunkBatchSinkConfig.PROPERTY_USERNAME,
+                                                           SplunkBatchSinkConfig.PROPERTY_TOKEN)
+    );
   }
 
   @Test
@@ -112,7 +112,7 @@ public class SplunkBatchSinkConfigTest extends BaseSplunkValidationTest {
         .setUsername(null)
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN), true);
+    assertValidationConnectionFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN));
   }
 
   @Test
@@ -125,7 +125,7 @@ public class SplunkBatchSinkConfigTest extends BaseSplunkValidationTest {
         .setUsername(null)
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN), true);
+    assertValidationConnectionFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN));
   }
 
   @Test

@@ -41,7 +41,7 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
         .setUsername("")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_USERNAME), true);
+    assertValidationConnectionFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_USERNAME));
   }
 
   @Test
@@ -51,7 +51,7 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
         .setPassword("")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_PASSWORD), true);
+    assertValidationConnectionFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_PASSWORD));
   }
 
   @Test
@@ -61,9 +61,9 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
         .setUsername("invalid")
         .build();
 
-    assertValidationFailed(config, Arrays.asList(SplunkBatchSourceConfig.PROPERTY_USERNAME,
-                                                 SplunkBatchSourceConfig.PROPERTY_PASSWORD),
-                           true);
+    assertValidationConnectionFailed(config, Arrays.asList(SplunkBatchSourceConfig.PROPERTY_USERNAME,
+                                                           SplunkBatchSourceConfig.PROPERTY_PASSWORD)
+    );
   }
 
   @Test
@@ -74,7 +74,7 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
         .setToken("")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_TOKEN), true);
+    assertValidationConnectionFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_TOKEN));
   }
 
   @Test
@@ -85,7 +85,7 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
         .setToken("invalid")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_TOKEN), true);
+    assertValidationConnectionFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_TOKEN));
   }
 
   @Test
