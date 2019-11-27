@@ -27,7 +27,6 @@ import com.splunk.ResultsReaderJson;
 import com.splunk.ResultsReaderXml;
 import com.splunk.Service;
 import io.cdap.plugin.splunk.common.exception.ConnectionTimeoutException;
-import io.cdap.plugin.splunk.common.exception.JobResultsException;
 import io.cdap.plugin.splunk.common.util.SearchHelper;
 import io.cdap.plugin.splunk.source.batch.SplunkBatchSourceConfig;
 
@@ -126,11 +125,7 @@ public class SplunkSearchIterator implements Iterator<Map<String, String>>, Clos
   }
 
   private InputStream getInputStream(Map<String, Object> resultsArguments, Job job) {
-    try {
-      return job.getResults(resultsArguments);
-    } catch (Exception e) {
-      throw new JobResultsException(e);
-    }
+    return SearchHelper.wrapRetryCall(() -> job.getResults(resultsArguments));
   }
 
   private Map<String, String> cleanUpFieldNames(Map<String, String> event) {

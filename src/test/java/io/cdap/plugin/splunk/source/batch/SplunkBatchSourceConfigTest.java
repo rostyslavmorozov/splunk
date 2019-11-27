@@ -16,8 +16,9 @@
 
 package io.cdap.plugin.splunk.source.batch;
 
-import io.cdap.cdap.etl.api.FailureCollector;
-import io.cdap.plugin.splunk.common.config.BaseSplunkValidationTest;
+import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
+import io.cdap.plugin.splunk.ValidationAssertions;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -26,46 +27,17 @@ import java.util.Collections;
 /**
  * Tests for {@link SplunkBatchSourceConfig}
  */
-public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
+public class SplunkBatchSourceConfigTest {
+
+  private static final String MOCK_STAGE = "mockStage";
 
   @Test
   public void testValidate() {
-    SplunkBatchSourceConfig config = new SplunkBatchSourceConfig(
-      "reference",
-      "basic",
-      "apiToken",
-      "userName",
-      60000,
-      60000,
-      3,
-      60000,
-      100,
-      "https://localhost:8089",
-      "password",
-      "executionMode",
-      "outputFormat",
-      "searchString",
-      "searchId",
-      0L,
-      "earliestTime",
-      "latestTime",
-      "indexedEarliestTime",
-      "indexedLatestTime",
-      100L,
-      "schema") {
-      @Override
-      void validateConnection(FailureCollector collector) {
-      }
-    };
-
-    assertValidationSucceed(config);
-  }
-
-  @Test
-  public void testInvalidUrl() {
     SplunkBatchSourceConfig config = SplunkBatchSourceConfigBuilder.CONFIG;
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_URL));
+    MockFailureCollector collector = new MockFailureCollector(MOCK_STAGE);
+    config.validate(collector);
+    Assert.assertTrue(collector.getValidationFailures().isEmpty());
   }
 
   @Test
@@ -73,21 +45,27 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
     SplunkBatchSourceConfig config =
       new SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfigBuilder.CONFIG)
         .setUsername("")
-        .setUrl("https://localhost:8089")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_USERNAME));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validateConnection(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_USERNAME));
   }
 
   @Test
   public void testPasswordEmpty() {
     SplunkBatchSourceConfig config =
       new SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfigBuilder.CONFIG)
-        .setUrl("https://localhost:8089")
         .setPassword("")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_PASSWORD));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validateConnection(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_PASSWORD));
   }
 
   @Test
@@ -95,11 +73,14 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
     SplunkBatchSourceConfig config =
       new SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfigBuilder.CONFIG)
         .setUsername("invalid")
-        .setUrl("https://localhost:8089")
         .build();
 
-    assertValidationFailed(config, Arrays.asList(SplunkBatchSourceConfig.PROPERTY_USERNAME,
-                                                 SplunkBatchSourceConfig.PROPERTY_PASSWORD));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validateConnection(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Arrays.asList(SplunkBatchSourceConfig.PROPERTY_USERNAME,
+                                      SplunkBatchSourceConfig.PROPERTY_PASSWORD));
   }
 
   @Test
@@ -108,10 +89,13 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
       new SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfigBuilder.CONFIG)
         .setAuthenticationType("token")
         .setToken("")
-        .setUrl("https://localhost:8089")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_TOKEN));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validateConnection(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_TOKEN));
   }
 
   @Test
@@ -120,110 +104,59 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
       new SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfigBuilder.CONFIG)
         .setAuthenticationType("token")
         .setToken("invalid")
-        .setUrl("https://localhost:8089")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_TOKEN));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validateConnection(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_TOKEN));
   }
 
   @Test
   public void testSearchStringAndSearchIdEmpty() {
-    SplunkBatchSourceConfig config = new SplunkBatchSourceConfig(
-      "reference",
-      "basic",
-      "apiToken",
-      "userName",
-      60000,
-      60000,
-      3,
-      60000,
-      100,
-      "https://localhost:8089",
-      "password",
-      "executionMode",
-      "outputFormat",
-      "",
-      "",
-      0L,
-      "earliestTime",
-      "latestTime",
-      "indexedEarliestTime",
-      "indexedLatestTime",
-      100L,
-      "schema") {
-      @Override
-      void validateConnection(FailureCollector collector) {
-      }
-    };
+    SplunkBatchSourceConfig config =
+      new SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfigBuilder.CONFIG)
+        .setSearchString("")
+        .setSearchId("")
+        .build();
 
-    assertValidationFailed(config, Arrays.asList(SplunkBatchSourceConfig.PROPERTY_SEARCH_STRING,
-                                                 SplunkBatchSourceConfig.PROPERTY_SEARCH_ID));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validate(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Arrays.asList(SplunkBatchSourceConfig.PROPERTY_SEARCH_STRING,
+                                      SplunkBatchSourceConfig.PROPERTY_SEARCH_ID));
   }
 
   @Test
   public void testSearchStringIsNotValid() {
-    SplunkBatchSourceConfig config = new SplunkBatchSourceConfig(
-      "reference",
-      "basic",
-      "apiToken",
-      "userName",
-      60000,
-      60000,
-      3,
-      60000,
-      100,
-      "https://localhost:8089",
-      "password",
-      "executionMode",
-      "outputFormat",
-      "notValid",
-      "",
-      0L,
-      "earliestTime",
-      "latestTime",
-      "indexedEarliestTime",
-      "indexedLatestTime",
-      100L,
-      "schema") {
-      @Override
-      void validateConnection(FailureCollector collector) {
-      }
-    };
+    SplunkBatchSourceConfig config =
+      new SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfigBuilder.CONFIG)
+        .setSearchString("notValid")
+        .setSearchId("")
+        .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_SEARCH_STRING));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validate(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_SEARCH_STRING));
   }
 
   @Test
   public void testSearchIdInOneshot() {
-    SplunkBatchSourceConfig config = new SplunkBatchSourceConfig(
-      "reference",
-      "basic",
-      "apiToken",
-      "userName",
-      60000,
-      60000,
-      3,
-      60000,
-      100,
-      "https://localhost:8089",
-      "password",
-      SplunkBatchSourceConfig.ONESHOT_JOB,
-      "outputFormat",
-      "",
-      "searchId",
-      0L,
-      "earliestTime",
-      "latestTime",
-      "indexedEarliestTime",
-      "indexedLatestTime",
-      100L,
-      "schema") {
-      @Override
-      void validateConnection(FailureCollector collector) {
-      }
-    };
+    SplunkBatchSourceConfig config =
+      new SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfigBuilder.CONFIG)
+        .setExecutionMode(SplunkBatchSourceConfig.ONESHOT_JOB)
+        .setSearchString("")
+        .build();
 
-    assertValidationFailed(config, Arrays.asList(SplunkBatchSourceConfig.PROPERTY_EXECUTION_MODE,
-                                                 SplunkBatchSourceConfig.PROPERTY_SEARCH_ID));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validate(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Arrays.asList(SplunkBatchSourceConfig.PROPERTY_EXECUTION_MODE,
+                                      SplunkBatchSourceConfig.PROPERTY_SEARCH_ID));
   }
 }

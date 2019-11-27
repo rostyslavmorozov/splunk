@@ -16,7 +16,6 @@
 
 package io.cdap.plugin.splunk.source.batch;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.splunk.HttpException;
 import io.cdap.cdap.api.annotation.Description;
@@ -27,8 +26,6 @@ import io.cdap.plugin.splunk.common.AuthenticationType;
 import io.cdap.plugin.splunk.common.client.SplunkSearchClient;
 import io.cdap.plugin.splunk.common.config.BaseSplunkConfig;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -42,7 +39,6 @@ public class SplunkBatchSourceConfig extends BaseSplunkConfig {
   public static final Long PARTITION_MAX_SIZE = 20000L;
   public static final String ONESHOT_JOB = "Oneshot";
 
-  public static final String PROPERTY_URL = "url";
   public static final String PROPERTY_PASSWORD = "password";
   public static final String PROPERTY_EXECUTION_MODE = "executionMode";
   public static final String PROPERTY_OUTPUT_FORMAT = "outputFormat";
@@ -54,13 +50,6 @@ public class SplunkBatchSourceConfig extends BaseSplunkConfig {
   public static final String PROPERTY_INDEXED_EARLIEST_TIME = "indexedEarliestTime";
   public static final String PROPERTY_INDEXED_LATEST_TIME = "indexedLatestTime";
   public static final String PROPERTY_SEARCH_RESULTS_COUNT = "searchResultsCount";
-  public static final String PROPERTY_SCHEMA = "schema";
-
-  @Name(PROPERTY_URL)
-  @Description("URL to point to the Splunk server. " +
-    "The format for URL: <protocol>://<host>:<port> (ex: https://localhost:8089).")
-  @Macro
-  private String url;
 
   @Name(PROPERTY_PASSWORD)
   @Description("Password for authentication to the Splunk API.")
@@ -147,6 +136,7 @@ public class SplunkBatchSourceConfig extends BaseSplunkConfig {
   private String schema;
 
   public SplunkBatchSourceConfig(String referenceName,
+                                 String url,
                                  String authenticationType,
                                  @Nullable String token,
                                  @Nullable String username,
@@ -155,7 +145,6 @@ public class SplunkBatchSourceConfig extends BaseSplunkConfig {
                                  Integer numberOfRetries,
                                  Integer maxRetryWait,
                                  Integer maxRetryJitterWait,
-                                 String url,
                                  @Nullable String password,
                                  String executionMode,
                                  String outputFormat,
@@ -168,10 +157,9 @@ public class SplunkBatchSourceConfig extends BaseSplunkConfig {
                                  @Nullable String indexedLatestTime,
                                  Long searchResultsCount,
                                  @Nullable String schema) {
-    super(referenceName, authenticationType, token, username,
+    super(referenceName, url, authenticationType, token, username,
           connectTimeout, readTimeout, numberOfRetries,
           maxRetryWait, maxRetryJitterWait);
-    this.url = url;
     this.password = password;
     this.executionMode = executionMode;
     this.outputFormat = outputFormat;
@@ -184,18 +172,6 @@ public class SplunkBatchSourceConfig extends BaseSplunkConfig {
     this.indexedLatestTime = indexedLatestTime;
     this.searchResultsCount = searchResultsCount;
     this.schema = schema;
-  }
-
-  public String getUrlString() {
-    return url;
-  }
-
-  public URL getUrl() {
-    try {
-      return new URL(url);
-    } catch (MalformedURLException e) {
-      throw new IllegalArgumentException(String.format("'%s' is not a valid URL.", url));
-    }
   }
 
   public String getExecutionMode() {
@@ -260,12 +236,9 @@ public class SplunkBatchSourceConfig extends BaseSplunkConfig {
    *
    * @return map of arguments
    */
+  @Override
   public Map<String, Object> getConnectionArguments() {
-    URL url = getUrl();
-    Map<String, Object> arguments = new HashMap<>();
-    arguments.put("host", url.getHost());
-    arguments.put("port", url.getPort());
-    arguments.put("scheme", url.getProtocol());
+    Map<String, Object> arguments = super.getConnectionArguments();
     if (!Strings.isNullOrEmpty(getToken())) {
       arguments.put("token", "Bearer " + getToken());
     }
@@ -275,8 +248,6 @@ public class SplunkBatchSourceConfig extends BaseSplunkConfig {
     if (!Strings.isNullOrEmpty(password)) {
       arguments.put("password", password);
     }
-    arguments.put("connectTimeout", getConnectTimeout());
-    arguments.put("readTimeout", getReadTimeout());
     return arguments;
   }
 
@@ -324,7 +295,6 @@ public class SplunkBatchSourceConfig extends BaseSplunkConfig {
   @Override
   public void validate(FailureCollector collector) {
     super.validate(collector);
-    validateConnection(collector);
     if (!containsMacro(PROPERTY_SEARCH_STRING)
       && !Strings.isNullOrEmpty(searchString)) {
       String search = searchString.trim();
@@ -357,13 +327,12 @@ public class SplunkBatchSourceConfig extends BaseSplunkConfig {
     }
   }
 
-  @VisibleForTesting
-  void validateConnection(FailureCollector collector) {
-    boolean hasPropertyErrors = checkAuthProperties(collector);
-    if (hasPropertyErrors) {
+  @Override
+  public void validateConnection(FailureCollector collector) {
+    boolean hasAuthErrors = checkAuthProperties(collector);
+    if (containsMacro(PROPERTY_URL) || hasAuthErrors) {
       return;
     }
-
     AuthenticationType authenticationType = getAuthenticationType();
     try {
       SplunkSearchClient client = new SplunkSearchClient(this);
@@ -410,13 +379,6 @@ public class SplunkBatchSourceConfig extends BaseSplunkConfig {
 
   private boolean checkAuthProperties(FailureCollector collector) {
     boolean hasPropertyErrors = false;
-    try {
-      getUrl();
-    } catch (IllegalArgumentException e) {
-      collector.addFailure(e.getMessage(), null)
-        .withConfigProperty(PROPERTY_URL);
-      hasPropertyErrors = true;
-    }
 
     AuthenticationType authenticationType = getAuthenticationType();
     switch (authenticationType) {

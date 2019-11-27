@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.splunk.common.config;
 
+import com.splunk.SSLSecurityProtocol;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
@@ -24,6 +25,10 @@ import io.cdap.plugin.common.IdUtils;
 import io.cdap.plugin.common.ReferencePluginConfig;
 import io.cdap.plugin.splunk.common.AuthenticationType;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -31,6 +36,7 @@ import javax.annotation.Nullable;
  */
 public class BaseSplunkConfig extends ReferencePluginConfig {
 
+  public static final String PROPERTY_URL = "url";
   public static final String PROPERTY_AUTHENTICATION_TYPE = "authenticationType";
   public static final String PROPERTY_TOKEN = "token";
   public static final String PROPERTY_USERNAME = "username";
@@ -39,6 +45,13 @@ public class BaseSplunkConfig extends ReferencePluginConfig {
   public static final String PROPERTY_NUMBER_OF_RETRIES = "numberOfRetries";
   public static final String PROPERTY_MAX_RETRY_WAIT = "maxRetryWait";
   public static final String PROPERTY_MAX_RETRY_JITTER_WAIT = "maxRetryJitterWait";
+  public static final String PROPERTY_SCHEMA = "schema";
+
+  @Name(PROPERTY_URL)
+  @Description("URL to point to the Splunk server. " +
+    "The format for URL: <protocol>://<host>:<port> (ex: https://localhost:8089).")
+  @Macro
+  private String url;
 
   @Name(PROPERTY_AUTHENTICATION_TYPE)
   @Description("Authentication method to access Splunk API. " +
@@ -87,6 +100,7 @@ public class BaseSplunkConfig extends ReferencePluginConfig {
   private Integer maxRetryJitterWait;
 
   public BaseSplunkConfig(String referenceName,
+                          String url,
                           String authenticationType,
                           @Nullable String token,
                           @Nullable String username,
@@ -96,6 +110,7 @@ public class BaseSplunkConfig extends ReferencePluginConfig {
                           Integer maxRetryWait,
                           Integer maxRetryJitterWait) {
     super(referenceName);
+    this.url = url;
     this.authenticationType = authenticationType;
     this.token = token;
     this.username = username;
@@ -104,6 +119,18 @@ public class BaseSplunkConfig extends ReferencePluginConfig {
     this.numberOfRetries = numberOfRetries;
     this.maxRetryWait = maxRetryWait;
     this.maxRetryJitterWait = maxRetryJitterWait;
+  }
+
+  public String getUrlString() {
+    return url;
+  }
+
+  public URL getUrl() {
+    try {
+      return new URL(url);
+    } catch (MalformedURLException e) {
+      throw new IllegalArgumentException(String.format("'%s' is not a valid URL.", url));
+    }
   }
 
   public String getAuthenticationTypeString() {
@@ -116,6 +143,8 @@ public class BaseSplunkConfig extends ReferencePluginConfig {
         return AuthenticationType.BASIC;
       case "token":
         return AuthenticationType.TOKEN;
+      case "query":
+        return AuthenticationType.QUERY_STRING;
       default:
         throw new IllegalArgumentException(
           String.format("Authentication using '%s' is not supported.", authenticationType));
@@ -153,11 +182,40 @@ public class BaseSplunkConfig extends ReferencePluginConfig {
   public void validate(FailureCollector collector) {
     IdUtils.validateReferenceName(referenceName, collector);
     try {
+      if (!containsMacro(PROPERTY_URL)) {
+        getUrl();
+      }
+    } catch (IllegalArgumentException e) {
+      collector.addFailure(String.format("Invalid 'Url' propery: %s", e.getMessage()), null)
+        .withConfigProperty(PROPERTY_URL);
+    }
+    try {
       getAuthenticationType();
     } catch (IllegalArgumentException e) {
-      collector.addFailure(String.format("Invalid authentication type: %s.",
+      collector.addFailure(String.format("Invalid authentication type: '%s'.",
                                          authenticationType), null)
         .withConfigProperty(PROPERTY_AUTHENTICATION_TYPE);
     }
+  }
+
+  public void validateConnection(FailureCollector collector) {
+    // no-op
+  }
+
+  /**
+   * Returns connection properties required for Splunk client.
+   *
+   * @return map of arguments
+   */
+  public Map<String, Object> getConnectionArguments() {
+    URL url = getUrl();
+    Map<String, Object> arguments = new HashMap<>();
+    arguments.put("host", url.getHost());
+    arguments.put("port", url.getPort());
+    arguments.put("scheme", url.getProtocol());
+    arguments.put("SSLSecurityProtocol", SSLSecurityProtocol.TLSv1_2);
+    arguments.put("connectTimeout", getConnectTimeout());
+    arguments.put("readTimeout", getReadTimeout());
+    return arguments;
   }
 }

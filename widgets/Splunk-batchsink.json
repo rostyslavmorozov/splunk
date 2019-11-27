@@ -1,0 +1,181 @@
+{
+  "metadata": {
+    "spec-version": "1.5"
+  },
+  "configuration-groups": [
+    {
+      "label": "Basic",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Reference Name",
+          "name": "referenceName"
+        },
+        {
+          "name": "url",
+          "label": "URL",
+          "widget-type": "textbox",
+          "widget-attributes": {
+            "placeholder": "<protocol>://<host>:<port> (ex: http://localhost:8088)"
+          }
+        },
+        {
+          "name": "authenticationType",
+          "label": "Authentication Type",
+          "widget-type": "radio-group",
+          "widget-attributes": {
+            "layout": "inline",
+            "default": "basic",
+            "options": [
+              {
+                "id": "basic",
+                "label": "Basic Authentication"
+              },
+              {
+                "id": "token",
+                "label": "Token Authentication"
+              },
+              {
+                "id": "query",
+                "label": "Query String Authentication"
+              }
+            ]
+          }
+        },
+        {
+          "widget-type": "securekey-text",
+          "label": "HEC Token",
+          "name": "token",
+          "widget-attributes": {
+            "placeholder": "Splunk HEC Token"
+          }
+        },
+        {
+          "name": "username",
+          "label": "Username",
+          "widget-type": "textbox"
+        },
+        {
+          "name": "password",
+          "label": "Password",
+          "widget-type": "password"
+        },
+        {
+          "name": "endpoint",
+          "label": "Endpoint",
+          "widget-type": "select",
+          "widget-attributes": {
+            "default": "Event",
+            "values": [
+              "Event",
+              "Raw"
+            ]
+          }
+        },
+        {
+          "name": "batchSize",
+          "label": "Batch Size",
+          "widget-type": "number",
+          "widget-attributes": {
+            "min": "1",
+            "max": "10000",
+            "default": "1"
+          }
+        },
+        {
+          "name": "eventMetadata",
+          "label": "Event Metadata",
+          "widget-type": "json-editor"
+        },
+        {
+          "name": "channelIdentifierHeader",
+          "label": "Channel Identifier Header",
+          "widget-type": "textbox"
+        }
+      ]
+    },
+    {
+      "label": "Advanced",
+      "properties": [
+        {
+          "widget-type": "number",
+          "label": "Connect Timeout (milliseconds)",
+          "name": "connectTimeout",
+          "widget-attributes": {
+            "min": "0",
+            "default": "60000"
+          }
+        },
+        {
+          "widget-type": "number",
+          "label": "Read Timeout (milliseconds)",
+          "name": "readTimeout",
+          "widget-attributes": {
+            "min": "0",
+            "default": "60000"
+          }
+        },
+        {
+          "widget-type": "select",
+          "label": "Number of Retries",
+          "name": "numberOfRetries",
+          "widget-attributes": {
+            "values": [
+              "3",
+              "0",
+              "1",
+              "2",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9",
+              "10"
+            ],
+            "default": "3"
+          }
+        },
+        {
+          "widget-type": "number",
+          "label": "Max Retry Wait (milliseconds)",
+          "name": "maxRetryWait",
+          "widget-attributes": {
+            "min": "0",
+            "default": "60000"
+          }
+        },
+        {
+          "widget-type": "number",
+          "label": "Max Retry Jitter Wait (milliseconds)",
+          "name": "maxRetryJitterWait",
+          "widget-attributes": {
+            "min": "0",
+            "default": "100"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "schema",
+      "widget-type": "schema",
+      "widget-attributes": {}
+    }
+  ],
+  "filters": [
+    {
+      "name": "AuthTypeBasicFilter",
+      "condition": {
+        "expression": "authenticationType == 'basic'"
+      },
+      "show": [
+        {
+          "name": "username",
+          "type": "property"
+        }
+      ]
+    }
+  ]
+}

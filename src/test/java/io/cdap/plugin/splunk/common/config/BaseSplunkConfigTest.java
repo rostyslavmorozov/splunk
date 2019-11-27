@@ -16,6 +16,9 @@
 
 package io.cdap.plugin.splunk.common.config;
 
+import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
+import io.cdap.plugin.splunk.ValidationAssertions;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -23,37 +26,44 @@ import java.util.Collections;
 /**
  * Tests for {@link BaseSplunkConfig}
  */
-public class BaseSplunkConfigTest extends BaseSplunkValidationTest {
+public class BaseSplunkConfigTest {
+
+  private static final String MOCK_STAGE = "mockStage";
 
   @Test
   public void testValidate() {
-    BaseSplunkConfig config = new BaseSplunkConfig(
-      "reference",
-      "basic",
-      "apiToken",
-      "userName",
-      60000,
-      60000,
-      3,
-      60000,
-      100);
+    BaseSplunkConfig config = BaseSplunkConfigBuilder.CONFIG;
 
-    assertValidationSucceed(config);
+    MockFailureCollector collector = new MockFailureCollector(MOCK_STAGE);
+    config.validate(collector);
+    Assert.assertTrue(collector.getValidationFailures().isEmpty());
+  }
+
+  @Test
+  public void testInvalidUrl() {
+    BaseSplunkConfig config =
+      new BaseSplunkConfigBuilder(BaseSplunkConfigBuilder.CONFIG)
+        .setUrl("invalid")
+        .build();
+
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validate(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(BaseSplunkConfig.PROPERTY_URL));
   }
 
   @Test
   public void testInvalidAuthenticationType() {
-    BaseSplunkConfig config = new BaseSplunkConfig(
-      "reference",
-      "invalid",
-      "apiToken",
-      "userName",
-      60000,
-      60000,
-      3,
-      60000,
-      100);
+    BaseSplunkConfig config =
+      new BaseSplunkConfigBuilder(BaseSplunkConfigBuilder.CONFIG)
+        .setAuthenticationType("invalid")
+        .build();
 
-    assertValidationFailed(config, Collections.singletonList(BaseSplunkConfig.PROPERTY_AUTHENTICATION_TYPE));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validate(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(BaseSplunkConfig.PROPERTY_AUTHENTICATION_TYPE));
   }
 }

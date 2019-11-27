@@ -23,6 +23,7 @@ public class SplunkBatchSourceConfigBuilder {
 
   public static final SplunkBatchSourceConfig CONFIG = new SplunkBatchSourceConfig(
     "reference",
+    "https://localhost:8089",
     "basic",
     "apiToken",
     "userName",
@@ -31,7 +32,6 @@ public class SplunkBatchSourceConfigBuilder {
     3,
     60000,
     100,
-    "invalid",
     "password",
     "executionMode",
     "outputFormat",
@@ -208,6 +208,7 @@ public class SplunkBatchSourceConfigBuilder {
 
   public SplunkBatchSourceConfig build() {
     return new SplunkBatchSourceConfig(referenceName,
+                                       url,
                                        authenticationType,
                                        token,
                                        username,
@@ -216,7 +217,6 @@ public class SplunkBatchSourceConfigBuilder {
                                        numberOfRetries,
                                        maxRetryWait,
                                        maxRetryJitterWait,
-                                       url,
                                        password,
                                        executionMode,
                                        outputFormat,
