@@ -16,7 +16,9 @@
 
 package io.cdap.plugin.splunk.source.batch;
 
-import io.cdap.plugin.splunk.common.config.BaseSplunkValidationTest;
+import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
+import io.cdap.plugin.splunk.ValidationAssertions;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -25,13 +27,17 @@ import java.util.Collections;
 /**
  * Tests for {@link SplunkBatchSourceConfig}
  */
-public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
+public class SplunkBatchSourceConfigTest {
+
+  private static final String MOCK_STAGE = "mockStage";
 
   @Test
   public void testValidate() {
     SplunkBatchSourceConfig config = SplunkBatchSourceConfigBuilder.CONFIG;
 
-    assertValidationSucceed(config);
+    MockFailureCollector collector = new MockFailureCollector(MOCK_STAGE);
+    config.validate(collector);
+    Assert.assertTrue(collector.getValidationFailures().isEmpty());
   }
 
   @Test
@@ -41,7 +47,11 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
         .setUsername("")
         .build();
 
-    assertValidationConnectionFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_USERNAME));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validateConnection(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_USERNAME));
   }
 
   @Test
@@ -51,7 +61,11 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
         .setPassword("")
         .build();
 
-    assertValidationConnectionFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_PASSWORD));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validateConnection(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_PASSWORD));
   }
 
   @Test
@@ -61,9 +75,12 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
         .setUsername("invalid")
         .build();
 
-    assertValidationConnectionFailed(config, Arrays.asList(SplunkBatchSourceConfig.PROPERTY_USERNAME,
-                                                           SplunkBatchSourceConfig.PROPERTY_PASSWORD)
-    );
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validateConnection(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Arrays.asList(SplunkBatchSourceConfig.PROPERTY_USERNAME,
+                                      SplunkBatchSourceConfig.PROPERTY_PASSWORD));
   }
 
   @Test
@@ -74,7 +91,11 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
         .setToken("")
         .build();
 
-    assertValidationConnectionFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_TOKEN));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validateConnection(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_TOKEN));
   }
 
   @Test
@@ -85,7 +106,11 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
         .setToken("invalid")
         .build();
 
-    assertValidationConnectionFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_TOKEN));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validateConnection(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_TOKEN));
   }
 
   @Test
@@ -96,8 +121,12 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
         .setSearchId("")
         .build();
 
-    assertValidationFailed(config, Arrays.asList(SplunkBatchSourceConfig.PROPERTY_SEARCH_STRING,
-                                                 SplunkBatchSourceConfig.PROPERTY_SEARCH_ID));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validate(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Arrays.asList(SplunkBatchSourceConfig.PROPERTY_SEARCH_STRING,
+                                      SplunkBatchSourceConfig.PROPERTY_SEARCH_ID));
   }
 
   @Test
@@ -108,7 +137,11 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
         .setSearchId("")
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_SEARCH_STRING));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validate(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(SplunkBatchSourceConfig.PROPERTY_SEARCH_STRING));
   }
 
   @Test
@@ -119,7 +152,11 @@ public class SplunkBatchSourceConfigTest extends BaseSplunkValidationTest {
         .setSearchString("")
         .build();
 
-    assertValidationFailed(config, Arrays.asList(SplunkBatchSourceConfig.PROPERTY_EXECUTION_MODE,
-                                                 SplunkBatchSourceConfig.PROPERTY_SEARCH_ID));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validate(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Arrays.asList(SplunkBatchSourceConfig.PROPERTY_EXECUTION_MODE,
+                                      SplunkBatchSourceConfig.PROPERTY_SEARCH_ID));
   }
 }

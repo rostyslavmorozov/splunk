@@ -17,24 +17,19 @@
 package io.cdap.plugin.splunk.source.sink;
 
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.etl.api.validation.CauseAttributes;
-import io.cdap.cdap.etl.api.validation.ValidationFailure;
 import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
+import io.cdap.plugin.splunk.ValidationAssertions;
 import io.cdap.plugin.splunk.common.config.BaseSplunkConfig;
-import io.cdap.plugin.splunk.common.config.BaseSplunkValidationTest;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * Tests for {@link SplunkBatchSinkConfig}
  */
-public class SplunkBatchSinkConfigTest extends BaseSplunkValidationTest {
+public class SplunkBatchSinkConfigTest {
 
   private static final String MOCK_STAGE = "mockStage";
 
@@ -46,7 +41,10 @@ public class SplunkBatchSinkConfigTest extends BaseSplunkValidationTest {
   @Test
   public void testValidate() {
     SplunkBatchSinkConfig config = SplunkBatchSinkConfigBuilder.CONFIG;
-    assertValidationSucceed(config);
+
+    MockFailureCollector collector = new MockFailureCollector(MOCK_STAGE);
+    config.validate(collector, VALID_SCHEMA);
+    Assert.assertTrue(collector.getValidationFailures().isEmpty());
   }
 
   @Test
@@ -57,7 +55,11 @@ public class SplunkBatchSinkConfigTest extends BaseSplunkValidationTest {
         .setToken("")
         .build();
 
-    assertValidationConnectionFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validateConnection(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN));
   }
 
   @Test
@@ -68,7 +70,11 @@ public class SplunkBatchSinkConfigTest extends BaseSplunkValidationTest {
         .setToken("")
         .build();
 
-    assertValidationConnectionFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validateConnection(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN));
   }
 
   @Test
@@ -78,7 +84,11 @@ public class SplunkBatchSinkConfigTest extends BaseSplunkValidationTest {
         .setUsername("")
         .build();
 
-    assertValidationConnectionFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_USERNAME));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validateConnection(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_USERNAME));
   }
 
   @Test
@@ -88,7 +98,11 @@ public class SplunkBatchSinkConfigTest extends BaseSplunkValidationTest {
         .setToken("")
         .build();
 
-    assertValidationConnectionFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validateConnection(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN));
   }
 
   @Test
@@ -98,9 +112,12 @@ public class SplunkBatchSinkConfigTest extends BaseSplunkValidationTest {
         .setUrl("http://invalid.host.test.localhost:8088")
         .build();
 
-    assertValidationConnectionFailed(config, Arrays.asList(SplunkBatchSinkConfig.PROPERTY_USERNAME,
-                                                           SplunkBatchSinkConfig.PROPERTY_TOKEN)
-    );
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validateConnection(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Arrays.asList(SplunkBatchSinkConfig.PROPERTY_USERNAME,
+                                      SplunkBatchSinkConfig.PROPERTY_TOKEN));
   }
 
   @Test
@@ -112,7 +129,11 @@ public class SplunkBatchSinkConfigTest extends BaseSplunkValidationTest {
         .setUsername(null)
         .build();
 
-    assertValidationConnectionFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validateConnection(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN));
   }
 
   @Test
@@ -125,13 +146,21 @@ public class SplunkBatchSinkConfigTest extends BaseSplunkValidationTest {
         .setUsername(null)
         .build();
 
-    assertValidationConnectionFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validateConnection(failureCollector);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_TOKEN));
   }
 
   @Test
   public void testValidateSchemaNull() {
     SplunkBatchSinkConfig config = SplunkBatchSinkConfigBuilder.CONFIG;
-    assertValidationFailed(config, Collections.singletonList(BaseSplunkConfig.PROPERTY_SCHEMA), null);
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validate(failureCollector, null);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(BaseSplunkConfig.PROPERTY_SCHEMA));
   }
 
   @Test
@@ -139,7 +168,11 @@ public class SplunkBatchSinkConfigTest extends BaseSplunkValidationTest {
     Schema schema = Schema.recordOf("test");
 
     SplunkBatchSinkConfig config = SplunkBatchSinkConfigBuilder.CONFIG;
-    assertValidationFailed(config, Collections.singletonList(BaseSplunkConfig.PROPERTY_SCHEMA), schema);
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validate(failureCollector, schema);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(BaseSplunkConfig.PROPERTY_SCHEMA));
   }
 
   @Test
@@ -150,7 +183,11 @@ public class SplunkBatchSinkConfigTest extends BaseSplunkValidationTest {
         .setChannelIdentifierHeader(null)
         .build();
 
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_CHANNEL_IDENTIFIER_HEADER));
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    config.validate(failureCollector, VALID_SCHEMA);
+
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_CHANNEL_IDENTIFIER_HEADER));
   }
 
   @Test
@@ -160,31 +197,11 @@ public class SplunkBatchSinkConfigTest extends BaseSplunkValidationTest {
         .setEndpoint(SplunkBatchSinkConfig.ENPOINT_RAW)
         .setChannelIdentifierHeader("")
         .build();
-    assertValidationFailed(config, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_CHANNEL_IDENTIFIER_HEADER));
-  }
 
-  private static void assertValidationSucceed(SplunkBatchSinkConfig config) {
-    MockFailureCollector collector = new MockFailureCollector(MOCK_STAGE);
-    config.validate(collector, VALID_SCHEMA);
-    Assert.assertTrue(collector.getValidationFailures().isEmpty());
-  }
-
-  private static void assertValidationFailed(SplunkBatchSinkConfig config, List<String> paramNames) {
-    assertValidationFailed(config, paramNames, VALID_SCHEMA);
-  }
-
-  private static void assertValidationFailed(SplunkBatchSinkConfig config, List<String> paramNames, Schema schema) {
     MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
-    config.validate(failureCollector, schema);
+    config.validate(failureCollector, VALID_SCHEMA);
 
-    Assert.assertEquals(1, failureCollector.getValidationFailures().size());
-    List<ValidationFailure.Cause> causeList = failureCollector.getValidationFailures().get(0).getCauses()
-      .stream()
-      .filter(cause -> cause.getAttribute(CauseAttributes.STAGE_CONFIG) != null)
-      .collect(Collectors.toList());
-    Assert.assertEquals(paramNames.size(), causeList.size());
-    IntStream.range(0, paramNames.size())
-      .forEachOrdered(i -> Assert.assertEquals(
-        paramNames.get(i), causeList.get(i).getAttribute(CauseAttributes.STAGE_CONFIG)));
+    ValidationAssertions.assertValidationFailed(
+      failureCollector, Collections.singletonList(SplunkBatchSinkConfig.PROPERTY_CHANNEL_IDENTIFIER_HEADER));
   }
 }
