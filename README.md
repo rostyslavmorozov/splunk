@@ -20,3 +20,12 @@ Instructions to enable the tests:
 ```
 mvn clean test -Dsplunk.test.token.hec= -Dsplunk.test.token.api= -Dsplunk.test.url.write= -Dsplunk.test.url.read= -Dsplunk.test.index=
 ```
+**splunk.test.token.hec:** HEC Token for writing.
+
+**splunk.test.token.api:** API Token for reading.
+
+**splunk.test.url.write:** URL to point to the Splunk write endpoint. The format for URL: \<protocol>://\<host>:\<port> (ex: http://localhost:8088).
+
+**splunk.test.url.read:** URL to point to the Splunk read endpoint. The format for URL: \<protocol>://\<host>:\<port> (ex: https://localhost:8089).
+
+**splunk.test.index:** Splunk index with test data.

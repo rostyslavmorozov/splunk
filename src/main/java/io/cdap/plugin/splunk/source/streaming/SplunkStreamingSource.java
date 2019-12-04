@@ -41,7 +41,6 @@ public class SplunkStreamingSource extends StreamingSource<StructuredRecord> {
   public static final String NAME = "Splunk";
 
   private final SplunkStreamingSourceConfig config;
-  private Schema schema;
 
   public SplunkStreamingSource(SplunkStreamingSourceConfig config) {
     this.config = config;
@@ -53,7 +52,7 @@ public class SplunkStreamingSource extends StreamingSource<StructuredRecord> {
     config.validate(failureCollector);
     config.validateConnection(failureCollector);
     SplunkSearchClient splunkClient = new SplunkSearchClient(config);
-    schema = SchemaHelper.getSchema(splunkClient, config.getSchema(), failureCollector);
+    Schema schema = SchemaHelper.getSchema(splunkClient, config.getSchema(), failureCollector);
     failureCollector.getOrThrowException();
 
     pipelineConfigurer.getStageConfigurer().setOutputSchema(schema);
@@ -64,10 +63,8 @@ public class SplunkStreamingSource extends StreamingSource<StructuredRecord> {
     FailureCollector failureCollector = context.getFailureCollector();
     config.validate(failureCollector);
     config.validateConnection(failureCollector);
-    if (schema == null) {
-      SplunkSearchClient splunkClient = new SplunkSearchClient(config);
-      schema = SchemaHelper.getSchema(splunkClient, config.getSchema(), failureCollector);
-    }
+    SplunkSearchClient splunkClient = new SplunkSearchClient(config);
+    Schema schema = SchemaHelper.getSchema(splunkClient, config.getSchema(), failureCollector);
     failureCollector.getOrThrowException();
 
     return SplunkStreamingUtil.getStream(config, schema, context);

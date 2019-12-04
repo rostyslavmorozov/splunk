@@ -49,7 +49,6 @@ public class SplunkBatchSource extends BatchSource<NullWritable, Map<String, Str
   public static final String NAME = "Splunk";
 
   private final SplunkSourceConfig config;
-  private Schema schema;
   private SplunkMapToRecordTransformer transformer;
 
   public SplunkBatchSource(SplunkSourceConfig config) {
@@ -62,7 +61,7 @@ public class SplunkBatchSource extends BatchSource<NullWritable, Map<String, Str
     config.validate(failureCollector);
     config.validateConnection(failureCollector);
     SplunkSearchClient splunkClient = new SplunkSearchClient(config);
-    schema = SchemaHelper.getSchema(splunkClient, config.getSchema(), failureCollector);
+    Schema schema = SchemaHelper.getSchema(splunkClient, config.getSchema(), failureCollector);
     failureCollector.getOrThrowException();
 
     pipelineConfigurer.getStageConfigurer().setOutputSchema(schema);
@@ -73,10 +72,8 @@ public class SplunkBatchSource extends BatchSource<NullWritable, Map<String, Str
     FailureCollector failureCollector = context.getFailureCollector();
     config.validate(failureCollector);
     config.validateConnection(failureCollector);
-    if (schema == null) {
-      SplunkSearchClient splunkClient = new SplunkSearchClient(config);
-      schema = SchemaHelper.getSchema(splunkClient, config.getSchema(), failureCollector);
-    }
+    SplunkSearchClient splunkClient = new SplunkSearchClient(config);
+    Schema schema = SchemaHelper.getSchema(splunkClient, config.getSchema(), failureCollector);
     failureCollector.getOrThrowException();
 
     LineageRecorder lineageRecorder = new LineageRecorder(context, config.referenceName);
@@ -94,10 +91,8 @@ public class SplunkBatchSource extends BatchSource<NullWritable, Map<String, Str
   @Override
   public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
-    if (schema == null) {
-      SplunkSearchClient splunkClient = new SplunkSearchClient(config);
-      schema = SchemaHelper.getSchema(splunkClient, config.getSchema());
-    }
+    SplunkSearchClient splunkClient = new SplunkSearchClient(config);
+    Schema schema = SchemaHelper.getSchema(splunkClient, config.getSchema());
     this.transformer = new SplunkMapToRecordTransformer(schema);
   }
 
