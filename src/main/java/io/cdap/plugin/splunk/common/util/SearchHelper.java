@@ -16,16 +16,20 @@
 
 package io.cdap.plugin.splunk.common.util;
 
+import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
 import com.google.common.base.Strings;
+import com.splunk.Service;
 import io.cdap.plugin.splunk.common.config.BaseSplunkConfig;
+import io.cdap.plugin.splunk.common.exception.ConnectionTimeoutException;
 import io.cdap.plugin.splunk.common.exception.JobResultsException;
-import io.cdap.plugin.splunk.source.batch.SplunkBatchSourceConfig;
+import io.cdap.plugin.splunk.source.SplunkSourceConfig;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -36,7 +40,7 @@ public class SearchHelper {
   private SearchHelper() {
   }
 
-  public static String decorateSearchString(SplunkBatchSourceConfig config) {
+  public static String decorateSearchString(SplunkSourceConfig config) {
     String searchString = config.getSearchString();
     if (Strings.isNullOrEmpty(searchString)) {
       return searchString;
@@ -61,5 +65,19 @@ public class SearchHelper {
     } catch (Exception e) {
       throw new JobResultsException(e);
     }
+  }
+
+  public static Service buildSplunkService(SplunkSourceConfig config) {
+    Retryer<Service> retryer = SearchHelper.buildRetryer(config);
+    try {
+      return retryer.call(() -> getService(config));
+    } catch (ExecutionException | RetryException e) {
+      throw new ConnectionTimeoutException(
+        String.format("Cannot create Splunk connection to: '%s'", config.getUrlString()), e);
+    }
+  }
+
+  private static Service getService(SplunkSourceConfig config) {
+    return wrapRetryCall(() -> Service.connect(config.getConnectionArguments()));
   }
 }

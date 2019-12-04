@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.plugin.splunk.source.sink;
+package io.cdap.plugin.splunk.sink.batch;
 
 /**
  * Helper class to simplify {@link SplunkBatchSinkConfig} class creation.

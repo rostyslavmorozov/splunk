@@ -34,6 +34,10 @@ public class SplunkMapToRecordTransformer {
   }
 
   public StructuredRecord transform(Map<String, String> event) {
+    return getStructuredRecord(event, schema);
+  }
+
+  public static StructuredRecord getStructuredRecord(Map<String, String> event, Schema schema) {
     StructuredRecord.Builder builder = StructuredRecord.builder(schema);
     event.entrySet().stream()
       .filter(entry -> schema.getField(entry.getKey()) != null) // filter absent fields in the schema

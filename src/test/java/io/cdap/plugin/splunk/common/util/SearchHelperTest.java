@@ -16,8 +16,8 @@
 
 package io.cdap.plugin.splunk.common.util;
 
-import io.cdap.plugin.splunk.source.batch.SplunkBatchSourceConfig;
-import io.cdap.plugin.splunk.source.batch.SplunkBatchSourceConfigBuilder;
+import io.cdap.plugin.splunk.source.SplunkSourceConfig;
+import io.cdap.plugin.splunk.source.SplunkSourceConfigBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,8 +28,8 @@ public class SearchHelperTest {
 
   @Test
   public void testDecorateSearchStringNull() {
-    SplunkBatchSourceConfig config =
-      new SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfigBuilder.CONFIG)
+    SplunkSourceConfig config =
+      new SplunkSourceConfigBuilder(SplunkSourceConfigBuilder.CONFIG)
         .setSearchString(null)
         .build();
 
@@ -40,8 +40,8 @@ public class SearchHelperTest {
 
   @Test
   public void testDecorateSearchStringEmpty() {
-    SplunkBatchSourceConfig config =
-      new SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfigBuilder.CONFIG)
+    SplunkSourceConfig config =
+      new SplunkSourceConfigBuilder(SplunkSourceConfigBuilder.CONFIG)
         .setSearchString("")
         .build();
 
@@ -55,8 +55,8 @@ public class SearchHelperTest {
   public void testDecorateSearchStringDecorate() {
     String expected = "search * | kvform";
 
-    SplunkBatchSourceConfig config =
-      new SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfigBuilder.CONFIG)
+    SplunkSourceConfig config =
+      new SplunkSourceConfigBuilder(SplunkSourceConfigBuilder.CONFIG)
         .setSearchString("search *")
         .build();
 
@@ -70,8 +70,8 @@ public class SearchHelperTest {
   public void testDecorateSearchString() {
     String expected = "search *|kvform";
 
-    SplunkBatchSourceConfig config =
-      new SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfigBuilder.CONFIG)
+    SplunkSourceConfig config =
+      new SplunkSourceConfigBuilder(SplunkSourceConfigBuilder.CONFIG)
         .setSearchString(expected)
         .build();
 

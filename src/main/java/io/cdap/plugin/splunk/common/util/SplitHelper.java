@@ -16,7 +16,7 @@
 
 package io.cdap.plugin.splunk.common.util;
 
-import io.cdap.plugin.splunk.source.batch.SplunkBatchSourceConfig;
+import io.cdap.plugin.splunk.source.SplunkSourceConfig;
 import io.cdap.plugin.splunk.source.batch.SplunkSplit;
 
 /**
@@ -36,22 +36,22 @@ public class SplitHelper {
 
   public static long getPartitionsCount(double totalResults) {
     return (long) Math.ceil(
-      totalResults / (double) SplunkBatchSourceConfig.PARTITION_MAX_SIZE);
+      totalResults / (double) SplunkSourceConfig.PARTITION_MAX_SIZE);
   }
 
   public static SplunkSplit buildSplunkSplit(long totalResults, long partitionsCount,
                                              long partitionIndex, String searchId) {
-    long offset = partitionIndex * SplunkBatchSourceConfig.PARTITION_MAX_SIZE;
-    long endPageCount = totalResults % SplunkBatchSourceConfig.PARTITION_MAX_SIZE;
+    long offset = partitionIndex * SplunkSourceConfig.PARTITION_MAX_SIZE;
+    long endPageCount = totalResults % SplunkSourceConfig.PARTITION_MAX_SIZE;
     long count;
     if (partitionIndex == partitionsCount - 1) {
       if (endPageCount != 0) {
         count = endPageCount;
       } else {
-        count = SplunkBatchSourceConfig.PARTITION_MAX_SIZE;
+        count = SplunkSourceConfig.PARTITION_MAX_SIZE;
       }
     } else {
-      count = SplunkBatchSourceConfig.PARTITION_MAX_SIZE;
+      count = SplunkSourceConfig.PARTITION_MAX_SIZE;
     }
     return new SplunkSplit(searchId, offset, count);
   }

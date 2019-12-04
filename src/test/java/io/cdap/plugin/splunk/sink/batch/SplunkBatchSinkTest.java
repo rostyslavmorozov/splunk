@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.plugin.splunk.source.sink;
+package io.cdap.plugin.splunk.sink.batch;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -23,7 +23,6 @@ import com.splunk.Service;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.table.Table;
-import io.cdap.cdap.datapipeline.DataPipelineApp;
 import io.cdap.cdap.datapipeline.SmartWorkflow;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.mock.batch.MockSource;
@@ -33,7 +32,6 @@ import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
@@ -76,14 +74,6 @@ public class SplunkBatchSinkTest extends BaseSplunkTest {
 
   @BeforeClass
   public static void setupTestClass() throws Exception {
-    assertProperties();
-
-    ArtifactId parentArtifact = NamespaceId.DEFAULT.artifact(APP_ARTIFACT.getName(), APP_ARTIFACT.getVersion());
-    setupBatchArtifacts(parentArtifact, DataPipelineApp.class);
-    addPluginArtifact(NamespaceId.DEFAULT.artifact("example-plugins", "1.0.0"),
-                      parentArtifact,
-                      SplunkBatchSink.class);
-
     splunkClient = buildSplunkClient(URL_READ, "Bearer " + TOKEN_API);
   }
 

@@ -22,7 +22,7 @@ import io.cdap.cdap.etl.api.validation.CauseAttributes;
 import io.cdap.cdap.etl.api.validation.ValidationFailure;
 import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
 import io.cdap.plugin.splunk.common.client.SplunkSearchClient;
-import io.cdap.plugin.splunk.source.batch.SplunkBatchSourceConfig;
+import io.cdap.plugin.splunk.source.SplunkSourceConfig;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -61,7 +61,7 @@ public class SchemaHelperTest {
     Assert.assertEquals(1, collector.getValidationFailures().size());
     List<ValidationFailure.Cause> causeList = collector.getValidationFailures().get(0).getCauses();
     Assert.assertEquals(1, causeList.size());
-    Assert.assertEquals(SplunkBatchSourceConfig.PROPERTY_SCHEMA, collector.getValidationFailures().get(0)
+    Assert.assertEquals(SplunkSourceConfig.PROPERTY_SCHEMA, collector.getValidationFailures().get(0)
       .getCauses().get(0).getAttribute(CauseAttributes.STAGE_CONFIG));
   }
 

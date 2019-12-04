@@ -28,7 +28,7 @@ import com.splunk.ResultsReaderXml;
 import com.splunk.Service;
 import io.cdap.plugin.splunk.common.exception.ConnectionTimeoutException;
 import io.cdap.plugin.splunk.common.util.SearchHelper;
-import io.cdap.plugin.splunk.source.batch.SplunkBatchSourceConfig;
+import io.cdap.plugin.splunk.source.SplunkSourceConfig;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -47,17 +47,27 @@ public class SplunkSearchIterator implements Iterator<Map<String, String>>, Clos
   private static final Pattern RESTRICTED_PATTERN = Pattern.compile("[^a-zA-Z0-9_]");
 
   private final Service splunkService;
-  private final SplunkBatchSourceConfig config;
+  private final SplunkSourceConfig config;
   private final String searchId;
   private final Long offset;
   private final Long count;
+  private long iteratorPosition = 0L;
 
   private ResultsReader resultsReader;
   private Iterator<Event> iterator;
 
-  public SplunkSearchIterator(Service splunkService, SplunkBatchSourceConfig config,
+  public SplunkSearchIterator(Service splunkService, SplunkSourceConfig config,
                               String searchId, Long offset, Long count) {
     this.splunkService = splunkService;
+    this.config = config;
+    this.searchId = searchId;
+    this.offset = offset;
+    this.count = count;
+  }
+
+  public SplunkSearchIterator(SplunkSourceConfig config,
+                              String searchId, Long offset, Long count) {
+    this.splunkService = SearchHelper.buildSplunkService(config);
     this.config = config;
     this.searchId = searchId;
     this.offset = offset;
@@ -80,6 +90,7 @@ public class SplunkSearchIterator implements Iterator<Map<String, String>>, Clos
 
   @Override
   public Map<String, String> next() {
+    iteratorPosition++;
     Map<String, String> event = iterator.next();
     return cleanUpFieldNames(event);
   }
@@ -89,6 +100,14 @@ public class SplunkSearchIterator implements Iterator<Map<String, String>>, Clos
     if (resultsReader != null) {
       resultsReader.close();
     }
+  }
+
+  public long getIteratorPosition() {
+    return iteratorPosition;
+  }
+
+  public void setIteratorPosition(long iteratorPosition) {
+    this.iteratorPosition = iteratorPosition;
   }
 
   @VisibleForTesting
@@ -105,10 +124,10 @@ public class SplunkSearchIterator implements Iterator<Map<String, String>>, Clos
   }
 
   @VisibleForTesting
-  InputStream getStreamResults(SplunkBatchSourceConfig config, String searchId,
+  InputStream getStreamResults(SplunkSourceConfig config, String searchId,
                                long offset, Long count) {
     Map<String, Object> resultsArguments = config.getResultsArguments(offset, count);
-    if (SplunkBatchSourceConfig.ONESHOT_JOB.equals(config.getExecutionMode())) {
+    if (SplunkSourceConfig.ONESHOT_JOB.equals(config.getExecutionMode())) {
       String query = SearchHelper.decorateSearchString(config);
       resultsArguments.putAll(config.getSearchArguments());
       return splunkService.oneshotSearch(query, resultsArguments);
@@ -117,15 +136,17 @@ public class SplunkSearchIterator implements Iterator<Map<String, String>>, Clos
     Job job = splunkService.getJob(searchId);
     Retryer<InputStream> retryer = SearchHelper.buildRetryer(config);
     try {
-      return retryer.call(() -> getInputStream(resultsArguments, job));
+      return retryer.call(() -> getInputStream(config, resultsArguments, job));
     } catch (ExecutionException | RetryException e) {
       throw new ConnectionTimeoutException(
         String.format("Cannot create Splunk connection for search: '%s'", searchId), e);
     }
   }
 
-  private InputStream getInputStream(Map<String, Object> resultsArguments, Job job) {
-    return SearchHelper.wrapRetryCall(() -> job.getResults(resultsArguments));
+  private InputStream getInputStream(SplunkSourceConfig config,
+                                     Map<String, Object> resultsArguments,
+                                     Job job) {
+    return SearchHelper.wrapRetryCall(() -> config.getResults(resultsArguments, job));
   }
 
   private Map<String, String> cleanUpFieldNames(Map<String, String> event) {

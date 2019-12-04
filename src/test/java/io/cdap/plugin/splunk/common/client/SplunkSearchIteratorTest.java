@@ -19,8 +19,8 @@ package io.cdap.plugin.splunk.common.client;
 import com.google.common.collect.ImmutableMap;
 import com.splunk.Event;
 import com.splunk.ResultsReader;
-import io.cdap.plugin.splunk.source.batch.SplunkBatchSourceConfig;
-import io.cdap.plugin.splunk.source.batch.SplunkBatchSourceConfigBuilder;
+import io.cdap.plugin.splunk.source.SplunkSourceConfig;
+import io.cdap.plugin.splunk.source.SplunkSourceConfigBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -64,15 +64,15 @@ public class SplunkSearchIteratorTest {
     Mockito.when(resultsReader.iterator()).thenReturn(events.iterator());
 
     SplunkSearchIterator searchIterator = new SplunkSearchIterator(
-      null, SplunkBatchSourceConfigBuilder.CONFIG, SEARCH_ID, OFFSET,
-      SplunkBatchSourceConfig.PARTITION_MAX_SIZE) {
+      null, SplunkSourceConfigBuilder.CONFIG, SEARCH_ID, OFFSET,
+      SplunkSourceConfig.PARTITION_MAX_SIZE) {
       @Override
       ResultsReader getResultsReader(InputStream stream, String outputFormat) {
         return resultsReader;
       }
 
       @Override
-      InputStream getStreamResults(SplunkBatchSourceConfig config,
+      InputStream getStreamResults(SplunkSourceConfig config,
                                    String searchId, long offset, Long count) {
         return stream;
       }

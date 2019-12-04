@@ -16,33 +16,30 @@
 
 package io.cdap.plugin.splunk.common.client;
 
-import com.github.rholder.retry.RetryException;
-import com.github.rholder.retry.Retryer;
 import com.google.common.base.Strings;
 import com.splunk.Job;
 import com.splunk.Service;
 import com.splunk.ServiceInfo;
-import io.cdap.plugin.splunk.common.exception.ConnectionTimeoutException;
 import io.cdap.plugin.splunk.common.util.SearchHelper;
-import io.cdap.plugin.splunk.source.batch.SplunkBatchSourceConfig;
+import io.cdap.plugin.splunk.source.SplunkSourceConfig;
+import io.cdap.plugin.splunk.source.streaming.SplunkStreamingSourceConfig;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Splunk Client Wrapper.
  */
 public class SplunkSearchClient {
 
-  private final SplunkBatchSourceConfig config;
+  private final SplunkSourceConfig config;
   private final Service splunkService;
 
-  public SplunkSearchClient(SplunkBatchSourceConfig config) {
+  public SplunkSearchClient(SplunkSourceConfig config) {
     this.config = config;
-    this.splunkService = buildSplunkService(config);
+    this.splunkService = SearchHelper.buildSplunkService(config);
   }
 
   /**
@@ -60,7 +57,7 @@ public class SplunkSearchClient {
    * @return Search Id
    */
   public String prepareSearch() {
-    if (SplunkBatchSourceConfig.ONESHOT_JOB.equals(config.getExecutionMode())) {
+    if (SplunkSourceConfig.ONESHOT_JOB.equals(config.getExecutionMode())) {
       return "";
     }
     return getSearchId(config, Long.MAX_VALUE);
@@ -86,7 +83,7 @@ public class SplunkSearchClient {
    */
   public List<Map<String, String>> getSample() throws IOException {
     long countOfSamples = 100L;
-    SplunkBatchSourceConfig configForSchema = getConfigForSchema("Normal");
+    SplunkSourceConfig configForSchema = getConfigForSchema("Normal");
     String searchId = getSearchId(configForSchema, countOfSamples);
     List<Map<String, String>> sample = new ArrayList<>();
     try (SplunkSearchIterator iterator = buildSearchIterator(searchId, 0L, countOfSamples)) {
@@ -103,7 +100,7 @@ public class SplunkSearchClient {
    */
   public long getTotalResults() throws IOException {
     long countOfRecords = 1L;
-    SplunkBatchSourceConfig configForSchema = getConfigForSchema("Blocking");
+    SplunkSourceConfig configForSchema = getConfigForSchema("Blocking");
     String searchId = getSearchId(configForSchema, countOfRecords);
     try (SplunkSearchIterator iterator = buildSearchIterator(searchId, 0L, countOfRecords)) {
       iterator.hasNext();
@@ -112,46 +109,32 @@ public class SplunkSearchClient {
     return job.getResultCount();
   }
 
-  private Service buildSplunkService(SplunkBatchSourceConfig config) {
-    Retryer<Service> retryer = SearchHelper.buildRetryer(config);
-    try {
-      return retryer.call(() -> getService(config));
-    } catch (ExecutionException | RetryException e) {
-      throw new ConnectionTimeoutException(
-        String.format("Cannot create Splunk connection to: '%s'", config.getUrlString()), e);
-    }
+  private SplunkSourceConfig getConfigForSchema(String executionMode) {
+    return new SplunkSourceConfig(config.referenceName,
+                                  config.getUrlString(),
+                                  config.getAuthenticationTypeString(),
+                                  config.getToken(),
+                                  config.getUsername(),
+                                  config.getConnectTimeout(),
+                                  config.getReadTimeout(),
+                                  config.getNumberOfRetries(),
+                                  config.getMaxRetryWait(),
+                                  config.getMaxRetryJitterWait(),
+                                  config.getPassword(),
+                                  executionMode,
+                                  config.getOutputFormat(),
+                                  config.getSearchString(),
+                                  config.getSearchId(),
+                                  config.getAutoCancel(),
+                                  config.getEarliestTime(),
+                                  config.getLatestTime(),
+                                  config.getIndexedEarliestTime(),
+                                  config.getIndexedLatestTime(),
+                                  config.getSearchResultsCount(),
+                                  config.getSchema());
   }
 
-  private Service getService(SplunkBatchSourceConfig config) {
-    return SearchHelper.wrapRetryCall(() -> Service.connect(config.getConnectionArguments()));
-  }
-
-  private SplunkBatchSourceConfig getConfigForSchema(String executionMode) {
-    return new SplunkBatchSourceConfig(config.referenceName,
-                                       config.getUrlString(),
-                                       config.getAuthenticationTypeString(),
-                                       config.getToken(),
-                                       config.getUsername(),
-                                       config.getConnectTimeout(),
-                                       config.getReadTimeout(),
-                                       config.getNumberOfRetries(),
-                                       config.getMaxRetryWait(),
-                                       config.getMaxRetryJitterWait(),
-                                       config.getPassword(),
-                                       executionMode,
-                                       config.getOutputFormat(),
-                                       config.getSearchString(),
-                                       config.getSearchId(),
-                                       config.getAutoCancel(),
-                                       config.getEarliestTime(),
-                                       config.getLatestTime(),
-                                       config.getIndexedEarliestTime(),
-                                       config.getIndexedLatestTime(),
-                                       config.getSearchResultsCount(),
-                                       config.getSchema());
-  }
-
-  private String getSearchId(SplunkBatchSourceConfig config, Long countOfRecords) {
+  private String getSearchId(SplunkSourceConfig config, Long countOfRecords) {
     long timeToSleepMillis = 500L;
     Job job = getJob(config);
     while (!job.isDone()) {
@@ -159,7 +142,9 @@ public class SplunkSearchClient {
         sleep(timeToSleepMillis);
         continue;
       }
-      if (countOfRecords <= job.getResultCount()) {
+      Object searchMode = config.getSearchArguments().get(SplunkStreamingSourceConfig.SEARCH_MODE);
+      if (SplunkStreamingSourceConfig.SEARCH_REALTIME.equals(searchMode)
+        || countOfRecords <= job.getResultCount()) {
         return job.getSid();
       }
       sleep(timeToSleepMillis);
@@ -175,7 +160,7 @@ public class SplunkSearchClient {
     }
   }
 
-  private Job getJob(SplunkBatchSourceConfig config) {
+  private Job getJob(SplunkSourceConfig config) {
     if (!Strings.isNullOrEmpty(config.getSearchString())) {
       String query = SearchHelper.decorateSearchString(config);
       return splunkService.search(query, config.getSearchArguments());

@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
+import io.cdap.plugin.splunk.source.SplunkSourceConfig;
 
 import java.util.Map;
 
@@ -33,7 +34,7 @@ public class SplunkInputFormatProvider implements InputFormatProvider {
   private static final Gson GSON = new GsonBuilder().create();
   private final Map<String, String> conf;
 
-  public SplunkInputFormatProvider(SplunkBatchSourceConfig config) {
+  public SplunkInputFormatProvider(SplunkSourceConfig config) {
     this.conf = new ImmutableMap.Builder<String, String>()
       .put(PROPERTY_CONFIG_JSON, GSON.toJson(config))
       .build();
