@@ -79,9 +79,7 @@ public class SplunkReceiver extends Receiver<Map<String, String>> {
         }
       }
     } catch (Exception e) {
-      String errorMessage = "Exception while receiving messages from hubspot";
-      // Since it's top level method of thread, we need to log the exception or it will be unseen
-      LOG.error(errorMessage, e);
+      String errorMessage = "Exception while receiving messages from Splunk";
       throw new RuntimeException(errorMessage, e);
     }
   }

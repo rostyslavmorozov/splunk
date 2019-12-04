@@ -61,10 +61,8 @@ public class SplunkBatchSource extends BatchSource<NullWritable, Map<String, Str
     FailureCollector failureCollector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
     config.validate(failureCollector);
     config.validateConnection(failureCollector);
-    if (schema == null) {
-      SplunkSearchClient splunkClient = new SplunkSearchClient(config);
-      schema = SchemaHelper.getSchema(splunkClient, config.getSchema(), failureCollector);
-    }
+    SplunkSearchClient splunkClient = new SplunkSearchClient(config);
+    schema = SchemaHelper.getSchema(splunkClient, config.getSchema(), failureCollector);
     failureCollector.getOrThrowException();
 
     pipelineConfigurer.getStageConfigurer().setOutputSchema(schema);
