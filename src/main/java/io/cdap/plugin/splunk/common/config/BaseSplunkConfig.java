@@ -89,7 +89,7 @@ public class BaseSplunkConfig extends ReferencePluginConfig {
   private Integer numberOfRetries;
 
   @Name(PROPERTY_MAX_RETRY_WAIT)
-  @Description("Maximum time in seconds retries can take. Set to 0 for infinite. " +
+  @Description("Maximum time in milliseconds retries can take. Set to 0 for infinite. " +
     "Defaults to 60000 (1 minute).")
   @Macro
   private Integer maxRetryWait;

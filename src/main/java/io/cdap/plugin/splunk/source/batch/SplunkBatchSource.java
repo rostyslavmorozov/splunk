@@ -32,6 +32,7 @@ import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.splunk.common.client.SplunkSearchClient;
 import io.cdap.plugin.splunk.common.util.SchemaHelper;
+import io.cdap.plugin.splunk.source.SplunkSourceConfig;
 import org.apache.hadoop.io.NullWritable;
 
 import java.util.Map;
@@ -47,11 +48,11 @@ public class SplunkBatchSource extends BatchSource<NullWritable, Map<String, Str
 
   public static final String NAME = "Splunk";
 
-  private final SplunkBatchSourceConfig config;
+  private final SplunkSourceConfig config;
   private Schema schema;
   private SplunkMapToRecordTransformer transformer;
 
-  public SplunkBatchSource(SplunkBatchSourceConfig config) {
+  public SplunkBatchSource(SplunkSourceConfig config) {
     this.config = config;
   }
 

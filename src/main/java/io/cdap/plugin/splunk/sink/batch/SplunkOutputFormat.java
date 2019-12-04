@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.plugin.splunk.source.sink;
+package io.cdap.plugin.splunk.sink.batch;
 
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;

@@ -16,12 +16,24 @@
 
 package io.cdap.plugin.splunk.etl;
 
+import com.google.common.collect.ImmutableSet;
 import com.splunk.SSLSecurityProtocol;
 import com.splunk.Service;
+import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.datapipeline.DataPipelineApp;
+import io.cdap.cdap.datastreams.DataStreamsApp;
 import io.cdap.cdap.etl.mock.test.HydratorTestBase;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.TestConfiguration;
+import io.cdap.plugin.splunk.sink.batch.SplunkBatchSink;
+import io.cdap.plugin.splunk.source.batch.SplunkBatchSource;
+import io.cdap.plugin.splunk.source.batch.SplunkMapToRecordTransformer;
+import io.cdap.plugin.splunk.source.streaming.SplunkStreamingSource;
 import org.junit.Assume;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.internal.AssumptionViolatedException;
@@ -33,6 +45,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Tests to verify configuration of Splunk ETL plugins
@@ -60,6 +73,8 @@ public abstract class BaseSplunkTest extends HydratorTestBase {
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
   protected static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("data-pipeline", "3.2.0");
+  protected static final ArtifactSummary APP_STREAMS = new ArtifactSummary("data-streams", "3.2.0");
+
   protected static final String TOKEN_HEC = System.getProperty("splunk.test.token.hec");
   protected static final String TOKEN_API = System.getProperty("splunk.test.token.api");
   protected static final String URL_WRITE = System.getProperty("splunk.test.url.write");
@@ -69,7 +84,34 @@ public abstract class BaseSplunkTest extends HydratorTestBase {
   @Rule
   public TestName testName = new TestName();
 
-  protected static void assertProperties() {
+  @BeforeClass
+  public static void setupBasic() throws Exception {
+    assertProperties();
+
+    ArtifactId parentBatch = NamespaceId.DEFAULT.artifact(APP_ARTIFACT.getName(), APP_ARTIFACT.getVersion());
+    ArtifactId parentStreams = NamespaceId.DEFAULT.artifact(APP_STREAMS.getName(), APP_STREAMS.getVersion());
+
+    Set<ArtifactRange> parents = ImmutableSet.of(
+      new ArtifactRange(NamespaceId.DEFAULT.getNamespace(), parentBatch.getArtifact(),
+                        new ArtifactVersion(parentBatch.getVersion()), true,
+                        new ArtifactVersion(parentBatch.getVersion()), true),
+      new ArtifactRange(NamespaceId.DEFAULT.getNamespace(), parentStreams.getArtifact(),
+                        new ArtifactVersion(parentStreams.getVersion()), true,
+                        new ArtifactVersion(parentStreams.getVersion()), true)
+    );
+
+    setupBatchArtifacts(parentBatch, DataPipelineApp.class);
+    setupStreamingArtifacts(parentStreams, DataStreamsApp.class);
+
+    addPluginArtifact(NamespaceId.DEFAULT.artifact("splunk-plugins", "1.0.0"),
+                      parents,
+                      SplunkBatchSource.class,
+                      SplunkBatchSink.class,
+                      SplunkStreamingSource.class,
+                      SplunkMapToRecordTransformer.class);
+  }
+
+  private static void assertProperties() {
     try {
       Assume.assumeNotNull(TOKEN_HEC, TOKEN_API, URL_WRITE, URL_READ, INDEX);
     } catch (AssumptionViolatedException e) {

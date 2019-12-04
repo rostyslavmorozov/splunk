@@ -14,14 +14,14 @@
  * the License.
  */
 
-package io.cdap.plugin.splunk.source.batch;
+package io.cdap.plugin.splunk.source;
 
 /**
- * Helper class to simplify {@link SplunkBatchSourceConfig} class creation.
+ * Helper class to simplify {@link SplunkSourceConfig} class creation.
  */
-public class SplunkBatchSourceConfigBuilder {
+public class SplunkSourceConfigBuilder {
 
-  public static final SplunkBatchSourceConfig CONFIG = new SplunkBatchSourceConfig(
+  public static final SplunkSourceConfig CONFIG = new SplunkSourceConfig(
     "reference",
     "https://localhost:8089",
     "basic",
@@ -68,10 +68,10 @@ public class SplunkBatchSourceConfigBuilder {
   private Long searchResultsCount;
   private String schema;
 
-  public SplunkBatchSourceConfigBuilder() {
+  public SplunkSourceConfigBuilder() {
   }
 
-  public SplunkBatchSourceConfigBuilder(SplunkBatchSourceConfig config) {
+  public SplunkSourceConfigBuilder(SplunkSourceConfig config) {
     this.referenceName = config.referenceName;
     this.authenticationType = config.getAuthenticationTypeString();
     this.token = config.getToken();
@@ -96,138 +96,138 @@ public class SplunkBatchSourceConfigBuilder {
     this.schema = config.getSchema();
   }
 
-  public SplunkBatchSourceConfigBuilder setReferenceName(String referenceName) {
+  public SplunkSourceConfigBuilder setReferenceName(String referenceName) {
     this.referenceName = referenceName;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setAuthenticationType(String authenticationType) {
+  public SplunkSourceConfigBuilder setAuthenticationType(String authenticationType) {
     this.authenticationType = authenticationType;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setToken(String token) {
+  public SplunkSourceConfigBuilder setToken(String token) {
     this.token = token;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setUsername(String username) {
+  public SplunkSourceConfigBuilder setUsername(String username) {
     this.username = username;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setConnectTimeout(Integer connectTimeout) {
+  public SplunkSourceConfigBuilder setConnectTimeout(Integer connectTimeout) {
     this.connectTimeout = connectTimeout;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setReadTimeout(Integer readTimeout) {
+  public SplunkSourceConfigBuilder setReadTimeout(Integer readTimeout) {
     this.readTimeout = readTimeout;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setNumberOfRetries(Integer numberOfRetries) {
+  public SplunkSourceConfigBuilder setNumberOfRetries(Integer numberOfRetries) {
     this.numberOfRetries = numberOfRetries;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setMaxRetryWait(Integer maxRetryWait) {
+  public SplunkSourceConfigBuilder setMaxRetryWait(Integer maxRetryWait) {
     this.maxRetryWait = maxRetryWait;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setMaxRetryJitterWait(Integer maxRetryJitterWait) {
+  public SplunkSourceConfigBuilder setMaxRetryJitterWait(Integer maxRetryJitterWait) {
     this.maxRetryJitterWait = maxRetryJitterWait;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setUrl(String url) {
+  public SplunkSourceConfigBuilder setUrl(String url) {
     this.url = url;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setPassword(String password) {
+  public SplunkSourceConfigBuilder setPassword(String password) {
     this.password = password;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setExecutionMode(String executionMode) {
+  public SplunkSourceConfigBuilder setExecutionMode(String executionMode) {
     this.executionMode = executionMode;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setOutputFormat(String outputFormat) {
+  public SplunkSourceConfigBuilder setOutputFormat(String outputFormat) {
     this.outputFormat = outputFormat;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setSearchString(String searchString) {
+  public SplunkSourceConfigBuilder setSearchString(String searchString) {
     this.searchString = searchString;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setSearchId(String searchId) {
+  public SplunkSourceConfigBuilder setSearchId(String searchId) {
     this.searchId = searchId;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setAutoCancel(Long autoCancel) {
+  public SplunkSourceConfigBuilder setAutoCancel(Long autoCancel) {
     this.autoCancel = autoCancel;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setEarliestTime(String earliestTime) {
+  public SplunkSourceConfigBuilder setEarliestTime(String earliestTime) {
     this.earliestTime = earliestTime;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setLatestTime(String latestTime) {
+  public SplunkSourceConfigBuilder setLatestTime(String latestTime) {
     this.latestTime = latestTime;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setIndexedEarliestTime(String indexedEarliestTime) {
+  public SplunkSourceConfigBuilder setIndexedEarliestTime(String indexedEarliestTime) {
     this.indexedEarliestTime = indexedEarliestTime;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setIndexedLatestTime(String indexedLatestTime) {
+  public SplunkSourceConfigBuilder setIndexedLatestTime(String indexedLatestTime) {
     this.indexedLatestTime = indexedLatestTime;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setSearchResultsCount(Long searchResultsCount) {
+  public SplunkSourceConfigBuilder setSearchResultsCount(Long searchResultsCount) {
     this.searchResultsCount = searchResultsCount;
     return this;
   }
 
-  public SplunkBatchSourceConfigBuilder setSchema(String schema) {
+  public SplunkSourceConfigBuilder setSchema(String schema) {
     this.schema = schema;
     return this;
   }
 
-  public SplunkBatchSourceConfig build() {
-    return new SplunkBatchSourceConfig(referenceName,
-                                       url,
-                                       authenticationType,
-                                       token,
-                                       username,
-                                       connectTimeout,
-                                       readTimeout,
-                                       numberOfRetries,
-                                       maxRetryWait,
-                                       maxRetryJitterWait,
-                                       password,
-                                       executionMode,
-                                       outputFormat,
-                                       searchString,
-                                       searchId,
-                                       autoCancel,
-                                       earliestTime,
-                                       latestTime,
-                                       indexedEarliestTime,
-                                       indexedLatestTime,
-                                       searchResultsCount,
-                                       schema);
+  public SplunkSourceConfig build() {
+    return new SplunkSourceConfig(referenceName,
+                                  url,
+                                  authenticationType,
+                                  token,
+                                  username,
+                                  connectTimeout,
+                                  readTimeout,
+                                  numberOfRetries,
+                                  maxRetryWait,
+                                  maxRetryJitterWait,
+                                  password,
+                                  executionMode,
+                                  outputFormat,
+                                  searchString,
+                                  searchId,
+                                  autoCancel,
+                                  earliestTime,
+                                  latestTime,
+                                  indexedEarliestTime,
+                                  indexedLatestTime,
+                                  searchResultsCount,
+                                  schema);
   }
 }

@@ -21,7 +21,7 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.plugin.splunk.common.client.SplunkSearchClient;
 import io.cdap.plugin.splunk.common.exception.SchemaParseException;
-import io.cdap.plugin.splunk.source.batch.SplunkBatchSourceConfig;
+import io.cdap.plugin.splunk.source.SplunkSourceConfig;
 
 import java.io.IOException;
 import java.util.List;
@@ -43,7 +43,7 @@ public class SchemaHelper {
     } catch (SchemaParseException e) {
       failureCollector.addFailure("Unable to retrieve output schema.",
                                   null)
-        .withConfigProperty(SplunkBatchSourceConfig.PROPERTY_SCHEMA);
+        .withConfigProperty(SplunkSourceConfig.PROPERTY_SCHEMA);
       return null;
     }
   }

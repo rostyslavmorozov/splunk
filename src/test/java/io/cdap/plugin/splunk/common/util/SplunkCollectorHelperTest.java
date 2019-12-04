@@ -17,8 +17,8 @@
 package io.cdap.plugin.splunk.common.util;
 
 import com.splunk.RequestMessage;
-import io.cdap.plugin.splunk.source.sink.SplunkBatchSinkConfig;
-import io.cdap.plugin.splunk.source.sink.SplunkBatchSinkConfigBuilder;
+import io.cdap.plugin.splunk.sink.batch.SplunkBatchSinkConfig;
+import io.cdap.plugin.splunk.sink.batch.SplunkBatchSinkConfigBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 

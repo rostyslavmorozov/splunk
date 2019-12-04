@@ -16,7 +16,7 @@
 
 package io.cdap.plugin.splunk.common.util;
 
-import io.cdap.plugin.splunk.source.batch.SplunkBatchSourceConfig;
+import io.cdap.plugin.splunk.source.SplunkSourceConfig;
 import io.cdap.plugin.splunk.source.batch.SplunkSplit;
 import org.junit.Assert;
 import org.junit.Test;
@@ -61,7 +61,7 @@ public class SplitHelperTest {
 
   @Test
   public void testPartitionsCountTotalEqualsPartitionSize() {
-    long actual = SplitHelper.getPartitionsCount(SplunkBatchSourceConfig.PARTITION_MAX_SIZE);
+    long actual = SplitHelper.getPartitionsCount(SplunkSourceConfig.PARTITION_MAX_SIZE);
     Assert.assertEquals(1L, actual);
   }
 
@@ -86,7 +86,7 @@ public class SplitHelperTest {
     Assert.assertNotNull(actual);
 
     Assert.assertEquals(expectedOffset, actual.getOffset());
-    Assert.assertEquals(SplunkBatchSourceConfig.PARTITION_MAX_SIZE, actual.getCount());
+    Assert.assertEquals(SplunkSourceConfig.PARTITION_MAX_SIZE, actual.getCount());
     Assert.assertEquals(searchId, actual.getSearchId());
   }
 
@@ -125,7 +125,7 @@ public class SplitHelperTest {
     Assert.assertNotNull(actual);
 
     Assert.assertEquals(expectedOffset, actual.getOffset());
-    Assert.assertEquals(SplunkBatchSourceConfig.PARTITION_MAX_SIZE, actual.getCount());
+    Assert.assertEquals(SplunkSourceConfig.PARTITION_MAX_SIZE, actual.getCount());
     Assert.assertEquals(searchId, actual.getSearchId());
   }
 
@@ -144,7 +144,7 @@ public class SplitHelperTest {
     Assert.assertNotNull(actual);
 
     Assert.assertEquals(expectedOffset, actual.getOffset());
-    Assert.assertEquals(SplunkBatchSourceConfig.PARTITION_MAX_SIZE, actual.getCount());
+    Assert.assertEquals(SplunkSourceConfig.PARTITION_MAX_SIZE, actual.getCount());
     Assert.assertEquals(searchId, actual.getSearchId());
   }
 }

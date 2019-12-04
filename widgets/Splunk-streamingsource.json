@@ -1,0 +1,258 @@
+{
+  "metadata": {
+    "spec-version": "1.5"
+  },
+  "configuration-groups": [
+    {
+      "label": "Basic",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Reference Name",
+          "name": "referenceName"
+        },
+        {
+          "name": "url",
+          "label": "Data Source URL",
+          "widget-type": "textbox",
+          "widget-attributes": {
+            "placeholder": "<protocol>://<host>:<port> (ex: https://localhost:8089)"
+          }
+        },
+        {
+          "name": "authenticationType",
+          "label": "Authentication Type",
+          "widget-type": "radio-group",
+          "widget-attributes": {
+            "layout": "inline",
+            "default": "basic",
+            "options": [
+              {
+                "id": "basic",
+                "label": "Basic Authentication"
+              },
+              {
+                "id": "token",
+                "label": "Token Authentication"
+              }
+            ]
+          }
+        },
+        {
+          "widget-type": "securekey-text",
+          "label": "Token",
+          "name": "token",
+          "widget-attributes": {
+            "placeholder": "Splunk Token"
+          }
+        },
+        {
+          "name": "username",
+          "label": "Username",
+          "widget-type": "textbox"
+        },
+        {
+          "name": "password",
+          "label": "Password",
+          "widget-type": "password"
+        },
+        {
+          "name": "executionMode",
+          "label": "Execution Mode",
+          "widget-type": "select",
+          "widget-attributes": {
+            "default": "Normal",
+            "values": [
+              "Blocking",
+              "Normal"
+            ]
+          }
+        },
+        {
+          "name": "outputFormat",
+          "label": "Output Format",
+          "widget-type": "select",
+          "widget-attributes": {
+            "default": "xml",
+            "values": [
+              "csv",
+              "json",
+              "xml"
+            ]
+          }
+        },
+        {
+          "name": "searchString",
+          "label": "Search String",
+          "widget-type": "textbox"
+        },
+        {
+          "name": "searchId",
+          "label": "Search Id",
+          "widget-type": "textbox"
+        },
+        {
+          "widget-type": "number",
+          "label": "Auto Cancel (seconds)",
+          "name": "autoCancel",
+          "widget-attributes": {
+            "min": "0",
+            "default": "0"
+          },
+          "plugin-function": {
+            "label": "Get Schema",
+            "widget": "outputSchema",
+            "output-property": "schema",
+            "omit-properties": [
+              {
+                "name": "schema"
+              }
+            ]
+          }
+        },
+        {
+          "name": "earliestTime",
+          "label": "Earliest Time",
+          "widget-type": "textbox"
+        },
+        {
+          "name": "latestTime",
+          "label": "Latest Time",
+          "widget-type": "textbox"
+        },
+        {
+          "name": "indexedEarliestTime",
+          "label": "Indexed Earliest Time",
+          "widget-type": "textbox"
+        },
+        {
+          "name": "indexedLatestTime",
+          "label": "Indexed Latest Time",
+          "widget-type": "textbox"
+        },
+        {
+          "widget-type": "number",
+          "label": "Search Results Count",
+          "name": "searchResultsCount",
+          "widget-attributes": {
+            "min": "0",
+            "default": "0"
+          }
+        }
+      ]
+    },
+    {
+      "label": "Advanced",
+      "properties": [
+        {
+          "widget-type": "number",
+          "label": "Connect Timeout (milliseconds)",
+          "name": "connectTimeout",
+          "widget-attributes": {
+            "min": "0",
+            "default": "60000"
+          }
+        },
+        {
+          "widget-type": "number",
+          "label": "Read Timeout (milliseconds)",
+          "name": "readTimeout",
+          "widget-attributes": {
+            "min": "0",
+            "default": "60000"
+          }
+        },
+        {
+          "widget-type": "select",
+          "label": "Number of Retries",
+          "name": "numberOfRetries",
+          "widget-attributes": {
+            "values": [
+              "3",
+              "0",
+              "1",
+              "2",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9",
+              "10"
+            ],
+            "default": "3"
+          }
+        },
+        {
+          "widget-type": "number",
+          "label": "Max Retry Wait (milliseconds)",
+          "name": "maxRetryWait",
+          "widget-attributes": {
+            "min": "0",
+            "default": "60000"
+          }
+        },
+        {
+          "widget-type": "number",
+          "label": "Max Retry Jitter Wait (milliseconds)",
+          "name": "maxRetryJitterWait",
+          "widget-attributes": {
+            "min": "0",
+            "default": "100"
+          }
+        },
+        {
+          "widget-type": "number",
+          "label": "Poll Interval (milliseconds)",
+          "name": "pollInterval",
+          "widget-attributes": {
+            "min": "0",
+            "default": "60000"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "schema",
+      "widget-type": "schema",
+      "widget-attributes": {
+        "schema-default-type": "string",
+        "schema-types": [
+          "string"
+        ]
+      }
+    }
+  ],
+  "filters": [
+    {
+      "name": "AuthTypeBasicFilter",
+      "condition": {
+        "expression": "authenticationType == 'basic'"
+      },
+      "show": [
+        {
+          "name": "username",
+          "type": "property"
+        },
+        {
+          "name": "password",
+          "type": "property"
+        }
+      ]
+    },
+    {
+      "name": "AuthTypeAPITokenFilter",
+      "condition": {
+        "expression": "authenticationType == 'token'"
+      },
+      "show": [
+        {
+          "name": "token",
+          "type": "property"
+        }
+      ]
+    }
+  ]
+}

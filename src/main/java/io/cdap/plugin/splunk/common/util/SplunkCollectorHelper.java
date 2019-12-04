@@ -21,7 +21,7 @@ import com.splunk.RequestMessage;
 import com.splunk.ResponseMessage;
 import com.splunk.Service;
 import io.cdap.plugin.splunk.common.AuthenticationType;
-import io.cdap.plugin.splunk.source.sink.SplunkBatchSinkConfig;
+import io.cdap.plugin.splunk.sink.batch.SplunkBatchSinkConfig;
 
 import java.util.Base64;
 
@@ -32,6 +32,9 @@ public class SplunkCollectorHelper {
 
   public static final String HEADER_X_SPLUNK_REQUEST_CHANNEL = "X-Splunk-Request-Channel";
   public static final String HEADER_AUTHORIZATION = "Authorization";
+
+  private SplunkCollectorHelper() {
+  }
 
   public static String buildBasicAuth(SplunkBatchSinkConfig config) {
     String userpass = config.getUsername() + ":" + config.getToken();

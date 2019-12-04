@@ -20,6 +20,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.plugin.splunk.common.client.SplunkSearchClient;
 import io.cdap.plugin.splunk.common.client.SplunkSearchIterator;
+import io.cdap.plugin.splunk.source.SplunkSourceConfig;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -47,7 +48,7 @@ public class SplunkRecordReader extends RecordReader<NullWritable, Map<String, S
 
     Configuration conf = context.getConfiguration();
     String configJson = conf.get(SplunkInputFormatProvider.PROPERTY_CONFIG_JSON);
-    SplunkBatchSourceConfig config = GSON.fromJson(configJson, SplunkBatchSourceConfig.class);
+    SplunkSourceConfig config = GSON.fromJson(configJson, SplunkSourceConfig.class);
     SplunkSearchClient splunkClient = new SplunkSearchClient(config);
     searchIterator = splunkClient.buildSearchIterator(searchId, offset, count);
   }

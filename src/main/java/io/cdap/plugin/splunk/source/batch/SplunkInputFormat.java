@@ -20,6 +20,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.plugin.splunk.common.client.SplunkSearchClient;
 import io.cdap.plugin.splunk.common.util.SplitHelper;
+import io.cdap.plugin.splunk.source.SplunkSourceConfig;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -43,9 +44,9 @@ public class SplunkInputFormat extends InputFormat {
   @Override
   public List<InputSplit> getSplits(JobContext jobContext) throws IOException {
     Configuration configuration = jobContext.getConfiguration();
-    SplunkBatchSourceConfig config =
+    SplunkSourceConfig config =
       GSON.fromJson(configuration.get(SplunkInputFormatProvider.PROPERTY_CONFIG_JSON),
-                    SplunkBatchSourceConfig.class);
+                    SplunkSourceConfig.class);
 
     SplunkSearchClient splunkClient = new SplunkSearchClient(config);
     long totalResults = SplitHelper.getTotalResults(

@@ -24,7 +24,6 @@ import com.splunk.ResponseMessage;
 import com.splunk.Service;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.dataset.table.Table;
-import io.cdap.cdap.datapipeline.DataPipelineApp;
 import io.cdap.cdap.datapipeline.SmartWorkflow;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.mock.batch.MockSink;
@@ -34,12 +33,12 @@ import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.WorkflowManager;
 import io.cdap.plugin.splunk.etl.BaseSplunkTest;
+import io.cdap.plugin.splunk.source.SplunkSourceConfig;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -77,14 +76,6 @@ public class SplunkBatchSourceTest extends BaseSplunkTest {
 
   @BeforeClass
   public static void setupTestClass() throws Exception {
-    assertProperties();
-
-    ArtifactId parentArtifact = NamespaceId.DEFAULT.artifact(APP_ARTIFACT.getName(), APP_ARTIFACT.getVersion());
-    setupBatchArtifacts(parentArtifact, DataPipelineApp.class);
-    addPluginArtifact(NamespaceId.DEFAULT.artifact("example-plugins", "1.0.0"),
-                      parentArtifact,
-                      SplunkBatchSource.class);
-
     splunkClient = buildSplunkClient(URL_WRITE, "Splunk " + TOKEN_HEC);
     createEvent();
   }
@@ -410,7 +401,7 @@ public class SplunkBatchSourceTest extends BaseSplunkTest {
   @Test
   public void testBatchSourceOneshotSingleEventJson() throws Exception {
     ImmutableMap<String, String> properties = getBasicConfig()
-      .put("executionMode", SplunkBatchSourceConfig.ONESHOT_JOB)
+      .put("executionMode", SplunkSourceConfig.ONESHOT_JOB)
       .put("outputFormat", "json")
       .put("searchString", String.format(
         "search index=\"%s\" event=\"%s\" | kvform", INDEX,
@@ -427,7 +418,7 @@ public class SplunkBatchSourceTest extends BaseSplunkTest {
   @Test
   public void testBatchSourceOneshotAllEventsJson() throws Exception {
     ImmutableMap<String, String> properties = getBasicConfig()
-      .put("executionMode", SplunkBatchSourceConfig.ONESHOT_JOB)
+      .put("executionMode", SplunkSourceConfig.ONESHOT_JOB)
       .put("outputFormat", "json")
       .put("searchString", String.format(
         "search index=\"%s\" event=\"%s\" | kvform", INDEX,
@@ -444,7 +435,7 @@ public class SplunkBatchSourceTest extends BaseSplunkTest {
   @Test
   public void testBatchSourceOneshotAllIndexJson() throws Exception {
     ImmutableMap<String, String> properties = getBasicConfig()
-      .put("executionMode", SplunkBatchSourceConfig.ONESHOT_JOB)
+      .put("executionMode", SplunkSourceConfig.ONESHOT_JOB)
       .put("outputFormat", "json")
       .put("searchString", String.format("search index=\"%s\" | kvform", INDEX))
       .put("searchResultsCount", "0")
@@ -463,7 +454,7 @@ public class SplunkBatchSourceTest extends BaseSplunkTest {
   @Test
   public void testBatchSourceOneshotSingleEventXml() throws Exception {
     ImmutableMap<String, String> properties = getBasicConfig()
-      .put("executionMode", SplunkBatchSourceConfig.ONESHOT_JOB)
+      .put("executionMode", SplunkSourceConfig.ONESHOT_JOB)
       .put("outputFormat", "xml")
       .put("searchString", String.format(
         "search index=\"%s\" event=\"%s\" | kvform", INDEX,
@@ -480,7 +471,7 @@ public class SplunkBatchSourceTest extends BaseSplunkTest {
   @Test
   public void testBatchSourceOneshotAllEventsXml() throws Exception {
     ImmutableMap<String, String> properties = getBasicConfig()
-      .put("executionMode", SplunkBatchSourceConfig.ONESHOT_JOB)
+      .put("executionMode", SplunkSourceConfig.ONESHOT_JOB)
       .put("outputFormat", "xml")
       .put("searchString", String.format(
         "search index=\"%s\" event=\"%s\" | kvform", INDEX,
@@ -497,7 +488,7 @@ public class SplunkBatchSourceTest extends BaseSplunkTest {
   @Test
   public void testBatchSourceOneshotAllIndexXml() throws Exception {
     ImmutableMap<String, String> properties = getBasicConfig()
-      .put("executionMode", SplunkBatchSourceConfig.ONESHOT_JOB)
+      .put("executionMode", SplunkSourceConfig.ONESHOT_JOB)
       .put("outputFormat", "xml")
       .put("searchString", String.format("search index=\"%s\" | kvform", INDEX))
       .put("searchResultsCount", "0")
@@ -516,7 +507,7 @@ public class SplunkBatchSourceTest extends BaseSplunkTest {
   @Test
   public void testBatchSourceOneshotSingleEventCsv() throws Exception {
     ImmutableMap<String, String> properties = getBasicConfig()
-      .put("executionMode", SplunkBatchSourceConfig.ONESHOT_JOB)
+      .put("executionMode", SplunkSourceConfig.ONESHOT_JOB)
       .put("outputFormat", "csv")
       .put("searchString", String.format(
         "search index=\"%s\" event=\"%s\" | kvform", INDEX,
@@ -533,7 +524,7 @@ public class SplunkBatchSourceTest extends BaseSplunkTest {
   @Test
   public void testBatchSourceOneshotAllEventsCsv() throws Exception {
     ImmutableMap<String, String> properties = getBasicConfig()
-      .put("executionMode", SplunkBatchSourceConfig.ONESHOT_JOB)
+      .put("executionMode", SplunkSourceConfig.ONESHOT_JOB)
       .put("outputFormat", "csv")
       .put("searchString", String.format(
         "search index=\"%s\" event=\"%s\" | kvform", INDEX,
@@ -550,7 +541,7 @@ public class SplunkBatchSourceTest extends BaseSplunkTest {
   @Test
   public void testBatchSourceOneshotAllIndexCsv() throws Exception {
     ImmutableMap<String, String> properties = getBasicConfig()
-      .put("executionMode", SplunkBatchSourceConfig.ONESHOT_JOB)
+      .put("executionMode", SplunkSourceConfig.ONESHOT_JOB)
       .put("outputFormat", "csv")
       .put("searchString", String.format("search index=\"%s\" | kvform", INDEX))
       .put("searchResultsCount", "0")

@@ -30,7 +30,7 @@ import java.util.Map;
 public class SplunkMapToRecordTransformerTest {
 
   @Test
-  public void testParseSchema() {
+  public void testTransform() {
     Schema schema = Schema.recordOf(
       "test",
       Schema.Field.of("test_field_1", Schema.nullableOf(Schema.of(Schema.Type.LONG))),

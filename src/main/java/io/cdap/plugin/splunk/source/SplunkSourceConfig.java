@@ -14,10 +14,11 @@
  * the License.
  */
 
-package io.cdap.plugin.splunk.source.batch;
+package io.cdap.plugin.splunk.source;
 
 import com.google.common.base.Strings;
 import com.splunk.HttpException;
+import com.splunk.Job;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
@@ -26,15 +27,16 @@ import io.cdap.plugin.splunk.common.AuthenticationType;
 import io.cdap.plugin.splunk.common.client.SplunkSearchClient;
 import io.cdap.plugin.splunk.common.config.BaseSplunkConfig;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * This class {@link SplunkBatchSourceConfig} provides all the configuration required for
- * configuring the {@link SplunkBatchSource} plugin.
+ * This class {@link SplunkSourceConfig} provides all the configuration required for
+ * configuring the Source plugin.
  */
-public class SplunkBatchSourceConfig extends BaseSplunkConfig {
+public class SplunkSourceConfig extends BaseSplunkConfig {
 
   public static final Long PARTITION_MAX_SIZE = 20000L;
   public static final String ONESHOT_JOB = "Oneshot";
@@ -135,28 +137,28 @@ public class SplunkBatchSourceConfig extends BaseSplunkConfig {
   @Description("Output schema for the source.")
   private String schema;
 
-  public SplunkBatchSourceConfig(String referenceName,
-                                 String url,
-                                 String authenticationType,
-                                 @Nullable String token,
-                                 @Nullable String username,
-                                 Integer connectTimeout,
-                                 Integer readTimeout,
-                                 Integer numberOfRetries,
-                                 Integer maxRetryWait,
-                                 Integer maxRetryJitterWait,
-                                 @Nullable String password,
-                                 String executionMode,
-                                 String outputFormat,
-                                 @Nullable String searchString,
-                                 @Nullable String searchId,
-                                 @Nullable Long autoCancel,
-                                 @Nullable String earliestTime,
-                                 @Nullable String latestTime,
-                                 @Nullable String indexedEarliestTime,
-                                 @Nullable String indexedLatestTime,
-                                 Long searchResultsCount,
-                                 @Nullable String schema) {
+  public SplunkSourceConfig(String referenceName,
+                            String url,
+                            String authenticationType,
+                            @Nullable String token,
+                            @Nullable String username,
+                            Integer connectTimeout,
+                            Integer readTimeout,
+                            Integer numberOfRetries,
+                            Integer maxRetryWait,
+                            Integer maxRetryJitterWait,
+                            @Nullable String password,
+                            String executionMode,
+                            String outputFormat,
+                            @Nullable String searchString,
+                            @Nullable String searchId,
+                            @Nullable Long autoCancel,
+                            @Nullable String earliestTime,
+                            @Nullable String latestTime,
+                            @Nullable String indexedEarliestTime,
+                            @Nullable String indexedLatestTime,
+                            Long searchResultsCount,
+                            @Nullable String schema) {
     super(referenceName, url, authenticationType, token, username,
           connectTimeout, readTimeout, numberOfRetries,
           maxRetryWait, maxRetryJitterWait);
@@ -410,5 +412,9 @@ public class SplunkBatchSourceConfig extends BaseSplunkConfig {
         break;
     }
     return hasPropertyErrors;
+  }
+
+  public InputStream getResults(Map<String, Object> resultsArguments, Job job) {
+    return job.getResults(resultsArguments);
   }
 }

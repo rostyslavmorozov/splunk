@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.plugin.splunk.source.sink;
+package io.cdap.plugin.splunk.sink.batch;
 
 import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
