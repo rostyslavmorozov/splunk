@@ -23,8 +23,6 @@ Query String Authentication can be used in Splunk Cloud only.
 
 **Username:** Login name for authentication to the Splunk API.
 
-**Password:** Password for authentication to the Splunk API.
-
 **Endpoint:** Splunk endpoint to send data to.
 
 **Batch Size:** The number of messages to batch before sending. Default is 1.

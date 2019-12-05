@@ -56,11 +56,6 @@
           "widget-type": "textbox"
         },
         {
-          "name": "password",
-          "label": "Password",
-          "widget-type": "password"
-        },
-        {
           "name": "endpoint",
           "label": "Endpoint",
           "widget-type": "select",
